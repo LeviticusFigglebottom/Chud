@@ -4,6 +4,7 @@ import { useState, Component, ReactNode } from "react";
 import MainMenu from "@/components/MainMenu";
 import GameView from "@/components/GameView";
 import CampaignSelect from "@/components/CampaignSelect";
+import Tutorial from "@/components/Tutorial";
 import { FactionId, DifficultyLevel } from "@/game/engine/types";
 import { FACTION_INFO } from "@/game/data/definitions";
 
@@ -32,7 +33,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
   }
 }
 
-type Screen = "menu" | "campaign" | "skirmish" | "game";
+type Screen = "menu" | "campaign" | "skirmish" | "game" | "tutorial";
 
 interface GameSettings {
   faction: FactionId;
@@ -73,7 +74,11 @@ export default function Home() {
         <MainMenu
           onSkirmish={() => setScreen("skirmish")}
           onCampaign={() => setScreen("campaign")}
+          onTutorial={() => setScreen("tutorial")}
         />
+      )}
+      {screen === "tutorial" && (
+        <Tutorial onExit={() => setScreen("menu")} />
       )}
       {screen === "campaign" && (
         <CampaignSelect

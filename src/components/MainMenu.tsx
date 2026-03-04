@@ -7,6 +7,7 @@ import { FactionId } from "@/game/engine/types";
 interface MainMenuProps {
   onSkirmish: () => void;
   onCampaign: () => void;
+  onTutorial: () => void;
 }
 
 const FACTION_ICONS: Record<FactionId, string> = {
@@ -17,7 +18,7 @@ const FACTION_ICONS: Record<FactionId, string> = {
   neutral: "--",
 };
 
-export default function MainMenu({ onSkirmish, onCampaign }: MainMenuProps) {
+export default function MainMenu({ onSkirmish, onCampaign, onTutorial }: MainMenuProps) {
   const [hoveredFaction, setHoveredFaction] = useState<FactionId | null>(null);
 
   const factionEntries: { id: FactionId; icon: string }[] = [
@@ -114,6 +115,9 @@ export default function MainMenu({ onSkirmish, onCampaign }: MainMenuProps) {
 
       {/* Main Menu Buttons */}
       <div className="flex flex-col gap-3 relative z-10" style={{ minWidth: 280 }}>
+        <button onClick={onTutorial} className="btn-wc3 text-center">
+          Tutorial
+        </button>
         <button onClick={onCampaign} className="btn-wc3 btn-wc3-primary text-center">
           Campaign
         </button>

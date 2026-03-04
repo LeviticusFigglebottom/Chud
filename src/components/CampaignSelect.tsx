@@ -6,10 +6,10 @@ import { CAMPAIGNS, CampaignChapter } from "@/game/campaign/campaigns";
 import { FACTION_INFO } from "@/game/data/definitions";
 
 const FACTION_ICONS: Record<string, string> = {
-  chuds: "CH",
-  chosen: "TH",
-  crusaders: "CR",
-  chads: "GC",
+  chuds: "🐸",
+  chosen: "🏦",
+  crusaders: "🛡",
+  chads: "💪",
 };
 
 const DIFFICULTY_COLORS: Record<string, string> = {

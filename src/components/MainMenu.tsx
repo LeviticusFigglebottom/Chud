@@ -11,11 +11,11 @@ interface MainMenuProps {
 }
 
 const FACTION_ICONS: Record<FactionId, string> = {
-  chuds: "CH",
-  chosen: "TH",
-  crusaders: "CR",
-  chads: "GC",
-  neutral: "--",
+  chuds: "🐸",
+  chosen: "🏦",
+  crusaders: "🛡",
+  chads: "💪",
+  neutral: "⚔",
 };
 
 export default function MainMenu({ onSkirmish, onCampaign, onTutorial }: MainMenuProps) {

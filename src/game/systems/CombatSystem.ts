@@ -42,8 +42,12 @@ export class CombatSystem {
             unit.attackCooldown = 1 / unit.attackSpeed;
           }
         } else {
-          // Chase target
-          unit.path = this.engine.pathFinder.findPath(unit.position, target.position);
+          // Chase target - offset destination to spread units around the target
+          // Only repath every ~10 ticks or if no path exists to avoid constant recalculation
+          if (unit.path.length === 0 || this.engine.state.tick % 10 === 0) {
+            const chaseTarget = this.getSpreadPosition(unit, target);
+            unit.path = this.engine.pathFinder.findPath(unit.position, chaseTarget);
+          }
         }
       }
     }
@@ -95,6 +99,22 @@ export class CombatSystem {
         setTimeout(() => this.engine.removeEntity(target.id), 500);
       }
     }
+  }
+
+  // Spread units around target instead of all converging on exact same point
+  private getSpreadPosition(unit: Unit, target: Entity): Vector2 {
+    // Use unit id hash to get a consistent angle offset per unit
+    let hash = 0;
+    for (let i = 0; i < unit.id.length; i++) {
+      hash = ((hash << 5) - hash + unit.id.charCodeAt(i)) | 0;
+    }
+    const angle = ((hash % 360) / 360) * Math.PI * 2;
+    // Melee units spread in a ring around target, ranged units at attack range
+    const spreadRadius = unit.attackRange > 80 ? unit.attackRange * 0.8 : 20;
+    return {
+      x: target.position.x + Math.cos(angle) * spreadRadius,
+      y: target.position.y + Math.sin(angle) * spreadRadius,
+    };
   }
 
   private findNearestEnemy(unit: Unit): Entity | null {

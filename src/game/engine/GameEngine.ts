@@ -400,9 +400,9 @@ export class GameEngine {
         }
       }
 
-      // Simple separation: push apart from nearby units
-      // Workers gathering/returning resources get reduced separation so they don't get stuck
+      // Unit separation: push apart from nearby units to prevent clustering
       const isGathering = unit.state === 'gathering' || unit.state === 'building';
+      const isIdle = unit.state === 'idle';
       for (const [, other] of this.state.entities) {
         if (other.type !== 'unit' || other.id === entity.id) continue;
         const ou = other as Unit;
@@ -413,11 +413,22 @@ export class GameEngine {
         const dx2 = unit.position.x - ou.position.x;
         const dy2 = unit.position.y - ou.position.y;
         const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-        const minDist = isGathering ? 10 : 18;
+        // Larger separation radius for combat units, smaller for workers
+        const minDist = isGathering ? 10 : (isIdle ? 22 : 24);
         if (dist2 > 0 && dist2 < minDist) {
-          const pushForce = (minDist - dist2) * (isGathering ? 0.15 : 0.3);
-          const nx = dx2 / dist2;
-          const ny = dy2 / dist2;
+          // Stronger push force to prevent pile-ups, especially when stationary
+          const overlap = minDist - dist2;
+          const pushForce = isGathering
+            ? overlap * 0.15
+            : overlap * (isIdle ? 0.5 : 0.4);
+          let nx = dx2 / dist2;
+          let ny = dy2 / dist2;
+          // If units are nearly on top of each other, push in a random direction
+          if (dist2 < 1) {
+            const angle = Math.random() * Math.PI * 2;
+            nx = Math.cos(angle);
+            ny = Math.sin(angle);
+          }
           unit.position.x += nx * pushForce;
           unit.position.y += ny * pushForce;
         }

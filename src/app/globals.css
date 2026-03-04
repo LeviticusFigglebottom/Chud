@@ -683,3 +683,76 @@ html, body {
   color: #e04040;
   text-shadow: 0 1px 2px rgba(0,0,0,0.8);
 }
+
+/* --- TUTORIAL OVERLAY --- */
+.tutorial-overlay {
+  position: absolute;
+  left: 12px;
+  top: 172px;
+  width: 320px;
+  z-index: 40;
+  background: linear-gradient(180deg, rgba(26,23,16,0.95) 0%, rgba(14,12,8,0.95) 100%);
+  border: 2px solid #6b5a28;
+  border-radius: 4px;
+  padding: 12px 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.7), inset 0 1px 0 rgba(196,160,53,0.15);
+  pointer-events: auto;
+}
+
+.tutorial-step-indicator {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6b5a28;
+  margin-bottom: 4px;
+}
+
+.tutorial-progress-bar {
+  height: 3px;
+  background: #1a1710;
+  border-radius: 2px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.tutorial-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6b5a28, #c4a035);
+  transition: width 0.3s ease;
+}
+
+.tutorial-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #c4a035;
+  margin: 0 0 4px 0;
+}
+
+.tutorial-desc {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #b0a480;
+  margin: 0 0 8px 0;
+}
+
+.tutorial-instruction {
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, rgba(196,160,53,0.1), transparent);
+  border: 1px solid #3a3220;
+  color: #8a7e60;
+  margin-bottom: 10px;
+}
+
+.tutorial-instruction-done {
+  background: linear-gradient(90deg, rgba(74,122,48,0.2), transparent);
+  border-color: #4a7a30;
+  color: #8abc6a;
+}
+
+.tutorial-buttons {
+  display: flex;
+  gap: 8px;
+}

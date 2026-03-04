@@ -4,8 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { GameEngine } from "@/game/engine/GameEngine";
 import { Renderer } from "@/game/engine/Renderer";
 import { InputHandler } from "@/game/engine/InputHandler";
-import { GameConfig, Player, Tile } from "@/game/engine/types";
+import { GameConfig, Player, Entity } from "@/game/engine/types";
 import { generateDiscourseArena, getPlayerStartPositions } from "@/game/maps/MapGenerator";
+import GameHUD from "./GameHUD";
 
 // =====================================================
 // TUTORIAL - Step-by-step guided walkthrough
@@ -18,7 +19,7 @@ interface TutorialStep {
   instruction: string;
   highlight?: "minimap" | "resources" | "selection" | "commands" | "map";
   checkComplete?: (engine: GameEngine) => boolean;
-  autoComplete?: number; // auto-advance after N seconds
+  autoComplete?: number;
   onEnter?: (engine: GameEngine) => void;
 }
 
@@ -33,7 +34,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "camera",
     title: "Camera Controls",
-    description: "Move your view with WASD keys or Arrow keys. Scroll the mouse wheel to zoom in and out. Mouse edge scrolling is disabled - use keyboard controls only.",
+    description: "Move your view with WASD keys or Arrow keys. Scroll the mouse wheel to zoom in and out.",
     instruction: "Try moving the camera around with WASD, then press NEXT.",
     highlight: "map",
     autoComplete: 0,
@@ -41,7 +42,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "select_units",
     title: "Selecting Units",
-    description: "Left-click on a unit to select it. You can also click and drag to box-select multiple units. Hold Shift to add to your selection.",
+    description: "Left-click on a unit to select it. Click and drag to box-select multiple units. Hold Shift to add to your selection.",
     instruction: "Try selecting one of your workers (the small figures near your base).",
     highlight: "selection",
     checkComplete: (engine) => {
@@ -67,7 +68,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "gather_resources",
     title: "Gathering Resources",
-    description: "Your economy runs on three resources: Copium (blue crystals, ~1000 each), Clout (golden trees), and Tendies (rare chicken). Workers gather resources when you right-click on a resource node. When a resource is depleted, workers automatically move to the nearest available one.",
+    description: "Your economy runs on three resources: Copium (blue crystals), Clout (golden trees), and Tendies (rare chicken). Workers gather resources when you right-click on a resource node.",
     instruction: "Select a worker and right-click on a blue Copium crystal or golden Clout tree nearby.",
     highlight: "resources",
     checkComplete: (engine) => {
@@ -84,7 +85,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "select_building",
     title: "Buildings and Training",
-    description: "Left-click on your main building (the large structure near your workers) to select it. The command panel at the bottom-right will show what units it can train.",
+    description: "Left-click on your main building (the large structure) to select it. The command bar at the bottom will show what units it can train.",
     instruction: "Left-click directly on your main building to select it.",
     highlight: "commands",
     checkComplete: (engine) => {
@@ -98,7 +99,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "train_unit",
     title: "Training Workers",
-    description: "With your main building selected, click on a unit icon in the command panel to queue training. Workers cost 50 Copium. You can queue multiple units.",
+    description: "With your main building selected, click on a unit icon in the command bar at the bottom to queue training. Workers cost 50 Copium.",
     instruction: "Train a new worker from your main building.",
     checkComplete: (engine) => {
       for (const [, e] of engine.state.entities) {
@@ -114,15 +115,15 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "build_structure",
     title: "Constructing Buildings",
-    description: "Select a worker and click the Build icon (hammer) in the command panel, or press B. This opens the build menu showing available structures. Click one, then click on the map to place it. Buildings cannot be placed on water or mountains.",
-    instruction: "Select a worker and try building a supply structure (Tendie Stand / Investment Portfolio / Simp Barracks / Protein Locker).",
+    description: "Select a worker and click the Build icon (hammer) in the command bar, or press B. Choose a structure, then click on the map to place it.",
+    instruction: "Select a worker and try building a supply structure.",
     highlight: "commands",
     autoComplete: 0,
   },
   {
     id: "minimap",
     title: "The Minimap",
-    description: "The minimap in the bottom-left shows the entire battlefield. Click on it to jump your camera to that location. Colored dots show units and buildings.",
+    description: "The minimap in the top-left shows the entire battlefield. Click on it to jump your camera to that location.",
     instruction: "Try clicking on the minimap to move your view.",
     highlight: "minimap",
     autoComplete: 0,
@@ -130,21 +131,14 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "combat",
     title: "Combat",
-    description: "To attack enemies, select military units and right-click on an enemy, or press A then click the ground to attack-move. Press M then click to issue a move command. Press P to patrol. Press H to stop/hold. Use control groups (Ctrl+1-5 to assign, 1-5 to recall). Units cannot walk through water - pathfinding routes around obstacles.",
-    instruction: "Press NEXT when ready.",
-    autoComplete: 0,
-  },
-  {
-    id: "pause",
-    title: "Pausing the Game",
-    description: "Press Space to pause/resume the game at any time. This gives you time to think and issue commands. Use the Pause button in the top bar.",
+    description: "To attack enemies, select military units and right-click on an enemy, or press A then click the ground to attack-move. Press H to stop/hold. Use control groups (Ctrl+1-5 to assign, 1-5 to recall).",
     instruction: "Press NEXT when ready.",
     autoComplete: 0,
   },
   {
     id: "complete",
     title: "Tutorial Complete!",
-    description: "You now know the basics. Build your economy, train an army, and crush your enemies. Remember: the key to victory is balancing economy and military. Good luck, Commander!",
+    description: "You now know the basics. Build your economy, train an army, and crush your enemies. Good luck, Commander!",
     instruction: "Press FINISH to return to the main menu, or keep playing to practice.",
     autoComplete: 0,
   },
@@ -165,6 +159,10 @@ export default function Tutorial({ onExit }: TutorialProps) {
   const [stepCompleted, setStepCompleted] = useState(false);
   const [resources, setResources] = useState({ copium: 0, clout: 0, tendies: 0 });
   const [population, setPopulation] = useState({ current: 0, max: 0 });
+  const [gameTime, setGameTime] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [selectedEntities, setSelectedEntities] = useState<Entity[]>([]);
+  const [inputMode, setInputMode] = useState("normal");
 
   const step = TUTORIAL_STEPS[currentStep];
   const isLastStep = currentStep === TUTORIAL_STEPS.length - 1;
@@ -175,11 +173,13 @@ export default function Tutorial({ onExit }: TutorialProps) {
     const canvas = canvasRef.current;
     const minimap = minimapRef.current;
 
-    const hudHeight = 228; // extra for tutorial panel
+    const topPanelHeight = 160;
+    const bottomPanelHeight = 80;
+    const hudHeight = topPanelHeight + bottomPanelHeight;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight - hudHeight;
-    minimap.width = 160;
-    minimap.height = 160;
+    minimap.width = 140;
+    minimap.height = 140;
 
     const config: GameConfig = {
       mapWidth: 80,
@@ -187,7 +187,7 @@ export default function Tutorial({ onExit }: TutorialProps) {
       tileSize: 32,
       startingResources: { copium: 800, clout: 400, tendies: 50 },
       maxPopulation: 100,
-      fogOfWar: false, // No fog in tutorial for easier learning
+      fogOfWar: false,
       difficulty: "baby",
     };
 
@@ -218,7 +218,7 @@ export default function Tutorial({ onExit }: TutorialProps) {
         maxPopulation: 100,
         entities: [],
         upgrades: [],
-        isAI: false, // No AI in tutorial
+        isAI: false,
         teamId: 2,
         color: "#FF4500",
         defeated: false,
@@ -240,7 +240,7 @@ export default function Tutorial({ onExit }: TutorialProps) {
       );
     }
 
-    // Spawn some enemy units for later combat practice
+    // Spawn some enemy units for combat practice
     const p2Pos = startPositions[1];
     engine.spawnBuilding("chad_main", "chads", p2Pos, "player2", true);
     for (let i = 0; i < 3; i++) {
@@ -263,13 +263,20 @@ export default function Tutorial({ onExit }: TutorialProps) {
     const input = new InputHandler(engine, canvas);
     inputRef.current = input;
 
+    // Selection callback
+    input.onSelectionChange = (entities) => {
+      setSelectedEntities([...entities]);
+    };
+    input.onModeChange = (mode) => {
+      setInputMode(mode);
+    };
+
     // Game loop
     const gameLoop = (timestamp: number) => {
       engine.update(timestamp);
       input.updateCamera();
       renderer.render(engine.state);
 
-      // Selection box overlay
       const dragRect = input.getDragRect();
       if (dragRect) {
         const ctx = canvas.getContext("2d");
@@ -282,13 +289,14 @@ export default function Tutorial({ onExit }: TutorialProps) {
         }
       }
 
-      // Sync UI state
       if (engine.state.tick % 5 === 0) {
         const localPlayer = engine.state.players.find(p => p.id === engine.state.localPlayerId);
         if (localPlayer) {
           setResources({ ...localPlayer.resources });
           setPopulation({ current: localPlayer.population, max: localPlayer.maxPopulation });
         }
+        setGameTime(engine.state.time);
+        setPaused(engine.state.paused);
       }
 
       animFrameRef.current = requestAnimationFrame(gameLoop);
@@ -336,7 +344,6 @@ export default function Tutorial({ onExit }: TutorialProps) {
     return () => clearInterval(interval);
   }, [currentStep, step]);
 
-  // Execute onEnter for step
   useEffect(() => {
     if (step?.onEnter && engineRef.current) {
       step.onEnter(engineRef.current);
@@ -353,138 +360,66 @@ export default function Tutorial({ onExit }: TutorialProps) {
     setStepCompleted(false);
   };
 
-  const highlightStyle = (area: string) => {
-    if (step?.highlight === area) {
-      return {
-        boxShadow: "0 0 12px 3px rgba(196,160,53,0.5), inset 0 0 8px rgba(196,160,53,0.15)",
-        border: "2px solid #c4a035",
-      };
-    }
-    return {};
-  };
-
   return (
-    <div className="w-full h-full flex flex-col" style={{ background: "#0a0908" }}>
-      {/* Game canvas */}
-      <canvas ref={canvasRef} className="flex-1" style={{ display: "block" }} />
-
-      {/* Tutorial + HUD panel */}
-      <div
-        className="flex"
-        style={{
-          height: 220,
-          background: "linear-gradient(180deg, #1a1710 0%, #0f0e0a 100%)",
-          borderTop: "2px solid #6b5a28",
+    <div className="w-full h-full flex flex-col relative" style={{ background: "#0a0908" }}>
+      {/* GameHUD top panel (minimap + resources + info) */}
+      <GameHUD
+        minimapRef={minimapRef}
+        resources={resources}
+        population={population}
+        gameTime={gameTime}
+        paused={paused}
+        selectedEntities={selectedEntities}
+        faction="chuds"
+        inputMode={inputMode}
+        onTrainUnit={(unitType) => inputRef.current?.trainUnit(unitType)}
+        onBuildBuilding={(buildingType) => inputRef.current?.startBuildingPlacement(buildingType)}
+        onTogglePause={() => {
+          if (engineRef.current) {
+            engineRef.current.state.paused = !engineRef.current.state.paused;
+          }
         }}
-      >
-        {/* Minimap */}
-        <div className="flex flex-col items-center p-2" style={{ borderRight: "1px solid #3a3220", ...highlightStyle("minimap") }}>
-          <canvas
-            ref={minimapRef}
-            width={160}
-            height={160}
-            style={{
-              border: "2px solid #6b5a28",
-              borderRadius: 2,
-            }}
+        onExit={onExit}
+        onMoveCommand={() => inputRef.current?.startMoveMode()}
+        onAttackCommand={() => inputRef.current?.startAttackMove()}
+        onStopCommand={() => inputRef.current?.issueStopCommand()}
+        onPatrolCommand={() => inputRef.current?.startPatrolMode()}
+        onAbilityCommand={(abilityId) => inputRef.current?.startAbilityTarget(abilityId)}
+      />
+
+      {/* Game canvas */}
+      <canvas ref={canvasRef} id="game-canvas" className="flex-1" style={{ display: "block" }} />
+
+      {/* Tutorial floating panel - overlaid on the game */}
+      <div className="tutorial-overlay">
+        <div className="tutorial-step-indicator">
+          Step {currentStep + 1}/{TUTORIAL_STEPS.length}
+        </div>
+        <div className="tutorial-progress-bar">
+          <div
+            className="tutorial-progress-fill"
+            style={{ width: `${((currentStep + 1) / TUTORIAL_STEPS.length) * 100}%` }}
           />
         </div>
-
-        {/* Tutorial panel */}
-        <div
-          className="flex-1 p-4 overflow-y-auto"
-          style={{ borderRight: "1px solid #3a3220", maxWidth: 480 }}
-        >
-          {/* Step indicator */}
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs tracking-wider uppercase" style={{ color: "#6b5a28" }}>
-              Step {currentStep + 1} / {TUTORIAL_STEPS.length}
-            </span>
-            <div className="flex-1 h-1 rounded" style={{ background: "#1a1710" }}>
-              <div
-                className="h-full rounded"
-                style={{
-                  width: `${((currentStep + 1) / TUTORIAL_STEPS.length) * 100}%`,
-                  background: "linear-gradient(90deg, #6b5a28, #c4a035)",
-                  transition: "width 0.3s ease",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Title */}
-          <h2 className="text-base font-bold mb-1" style={{ color: "#c4a035" }}>
-            {step?.title}
-          </h2>
-
-          {/* Description */}
-          <p className="text-xs leading-relaxed mb-2" style={{ color: "#b0a480" }}>
-            {step?.description}
-          </p>
-
-          {/* Instruction */}
-          <div
-            className="text-xs px-3 py-2 rounded mb-3"
-            style={{
-              background: stepCompleted
-                ? "linear-gradient(90deg, rgba(74,122,48,0.2), transparent)"
-                : "linear-gradient(90deg, rgba(196,160,53,0.1), transparent)",
-              border: stepCompleted ? "1px solid #4a7a30" : "1px solid #3a3220",
-              color: stepCompleted ? "#8abc6a" : "#8a7e60",
-            }}
-          >
-            {stepCompleted && !isLastStep
-              ? "Done! Press NEXT to continue."
-              : step?.instruction}
-          </div>
-
-          {/* Buttons */}
-          <div className="flex gap-3">
-            <button onClick={onExit} className="btn-wc3 text-xs py-1 px-3">
-              Exit Tutorial
-            </button>
-            <button
-              onClick={advanceStep}
-              className="btn-wc3 btn-wc3-primary text-xs py-1 px-3"
-              disabled={!stepCompleted}
-              style={{ opacity: stepCompleted ? 1 : 0.4 }}
-            >
-              {isLastStep ? "Finish" : "Next"}
-            </button>
-          </div>
+        <h3 className="tutorial-title">{step?.title}</h3>
+        <p className="tutorial-desc">{step?.description}</p>
+        <div className={`tutorial-instruction ${stepCompleted ? 'tutorial-instruction-done' : ''}`}>
+          {stepCompleted && !isLastStep
+            ? "Done! Press NEXT to continue."
+            : step?.instruction}
         </div>
-
-        {/* Resources panel */}
-        <div className="p-3 flex flex-col justify-between" style={{ minWidth: 160, ...highlightStyle("resources") }}>
-          <div>
-            <div className="text-xs font-bold tracking-wider uppercase mb-2" style={{ color: "#6b5a28" }}>
-              Resources
-            </div>
-            <div className="flex items-center gap-2 mb-1">
-              <span style={{ color: "#4da6ff", fontSize: 12 }}>C</span>
-              <span className="text-sm font-bold" style={{ color: "#4da6ff" }}>{Math.floor(resources.copium)}</span>
-              <span className="text-xs" style={{ color: "#3a3220" }}>Copium</span>
-            </div>
-            <div className="flex items-center gap-2 mb-1">
-              <span style={{ color: "#c4a035", fontSize: 12 }}>*</span>
-              <span className="text-sm font-bold" style={{ color: "#c4a035" }}>{Math.floor(resources.clout)}</span>
-              <span className="text-xs" style={{ color: "#3a3220" }}>Clout</span>
-            </div>
-            <div className="flex items-center gap-2 mb-1">
-              <span style={{ color: "#cc6644", fontSize: 12 }}>T</span>
-              <span className="text-sm font-bold" style={{ color: "#cc6644" }}>{Math.floor(resources.tendies)}</span>
-              <span className="text-xs" style={{ color: "#3a3220" }}>Tendies</span>
-            </div>
-
-            <div className="separator-gold my-2" />
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs" style={{ color: "#5a5030" }}>Pop:</span>
-              <span className="text-sm font-bold" style={{ color: "#8a7e60" }}>
-                {population.current} / {population.max}
-              </span>
-            </div>
-          </div>
+        <div className="tutorial-buttons">
+          <button onClick={onExit} className="btn-wc3" style={{ fontSize: 11, padding: "4px 12px" }}>
+            Exit
+          </button>
+          <button
+            onClick={advanceStep}
+            className="btn-wc3 btn-wc3-primary"
+            disabled={!stepCompleted}
+            style={{ fontSize: 11, padding: "4px 12px", opacity: stepCompleted ? 1 : 0.4 }}
+          >
+            {isLastStep ? "Finish" : "Next"}
+          </button>
         </div>
       </div>
     </div>

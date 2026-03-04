@@ -110,10 +110,10 @@ export default function Home() {
 // ============================================================
 
 const FACTION_ICONS: Record<string, string> = {
-  chuds: "CH",
-  chosen: "TH",
-  crusaders: "CR",
-  chads: "GC",
+  chuds: "🐸",
+  chosen: "🏦",
+  crusaders: "🛡",
+  chads: "💪",
 };
 
 const FACTIONS: { id: FactionId; name: string; desc: string; playstyle: string }[] = [

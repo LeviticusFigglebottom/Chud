@@ -2,7 +2,7 @@ import { GameEngine } from './GameEngine';
 import { Vector2, Entity, Unit, Building, Command, FactionId } from './types';
 import { getBuildingDefinition } from '../data/definitions';
 
-export type InputMode = 'normal' | 'building_placement' | 'ability_target';
+export type InputMode = 'normal' | 'building_placement' | 'ability_target' | 'attack_move' | 'patrol_target';
 
 interface DragState {
   active: boolean;
@@ -51,6 +51,16 @@ export class InputHandler {
 
       if (this.mode === 'ability_target') {
         this.useAbilityAtMouse(e);
+        return;
+      }
+
+      if (this.mode === 'attack_move') {
+        this.attackMoveAtMouse(e);
+        return;
+      }
+
+      if (this.mode === 'patrol_target') {
+        this.patrolAtMouse(e);
         return;
       }
 
@@ -165,6 +175,24 @@ export class InputHandler {
         // Stop/Hold position
         this.issueStopCommand();
         break;
+      case 'm':
+      case 'M':
+        // Move mode (click to move)
+        this.startMoveMode();
+        break;
+      case 'a':
+      case 'A':
+        // Only attack-move when not used for camera (handled: A/a is in keysDown for camera)
+        // Attack-move activates on keydown, camera uses keysDown in updateCamera
+        // We'll let both coexist - A press triggers attack mode, holding A scrolls camera
+        if (!this.keysDown.has('a') && !this.keysDown.has('A')) {
+          this.startAttackMove();
+        }
+        break;
+      case 'p':
+      case 'P':
+        this.startPatrolMode();
+        break;
       case ' ':
         // Pause/unpause
         this.engine.state.paused = !this.engine.state.paused;
@@ -253,7 +281,7 @@ export class InputHandler {
       .filter((e): e is Entity => !!e);
   }
 
-  private issueStopCommand(): void {
+  issueStopCommand(): void {
     const selected = this.getSelectedEntities();
     const unitIds = selected.filter(e => e.type === 'unit').map(e => e.id);
     if (unitIds.length > 0) {
@@ -300,6 +328,75 @@ export class InputHandler {
     this.cancelMode();
   }
 
+  // Move mode
+  startMoveMode(): void {
+    this.mode = 'normal'; // move is just right-click, so we stay in normal
+    this.onModeChange?.('normal');
+  }
+
+  // Attack-move mode
+  startAttackMove(): void {
+    const selected = this.getSelectedEntities();
+    if (selected.some(e => e.type === 'unit')) {
+      this.mode = 'attack_move';
+      this.onModeChange?.('attack_move');
+    }
+  }
+
+  private attackMoveAtMouse(e: MouseEvent): void {
+    const worldPos = this.engine.screenToWorld(e.offsetX, e.offsetY);
+    const selected = this.getSelectedEntities();
+    const unitIds = selected.filter(e => e.type === 'unit').map(e => e.id);
+
+    // Check if clicked on an enemy
+    const clickedEntities = this.engine.getEntitiesAt(worldPos, 20);
+    const localPlayer = this.engine.state.players.find(p => p.id === this.engine.state.localPlayerId);
+    const clickedEnemy = clickedEntities.find(entity => {
+      const owner = this.engine.getEntityOwner(entity.id);
+      return owner && localPlayer && owner.teamId !== localPlayer.teamId;
+    });
+
+    if (clickedEnemy && unitIds.length > 0) {
+      this.engine.issueCommand({
+        type: 'attack',
+        entityIds: unitIds,
+        targetEntityId: clickedEnemy.id,
+      });
+    } else if (unitIds.length > 0) {
+      // Attack-move to location
+      this.engine.issueCommand({
+        type: 'attack',
+        entityIds: unitIds,
+        target: worldPos,
+      });
+    }
+    this.cancelMode();
+  }
+
+  // Patrol mode
+  startPatrolMode(): void {
+    const selected = this.getSelectedEntities();
+    if (selected.some(e => e.type === 'unit')) {
+      this.mode = 'patrol_target';
+      this.onModeChange?.('patrol_target');
+    }
+  }
+
+  private patrolAtMouse(e: MouseEvent): void {
+    const worldPos = this.engine.screenToWorld(e.offsetX, e.offsetY);
+    const selected = this.getSelectedEntities();
+    const unitIds = selected.filter(e => e.type === 'unit').map(e => e.id);
+
+    if (unitIds.length > 0) {
+      this.engine.issueCommand({
+        type: 'patrol',
+        entityIds: unitIds,
+        target: worldPos,
+      });
+    }
+    this.cancelMode();
+  }
+
   // Ability targeting mode
   startAbilityTarget(abilityId: string): void {
     this.mode = 'ability_target';
@@ -342,16 +439,10 @@ export class InputHandler {
     }
   }
 
-  // Edge scrolling & camera movement - call this every frame
+  // Camera movement (WASD + Arrow keys only, no edge scrolling)
   updateCamera(): void {
     const cam = this.engine.state.camera;
     const speed = this.edgeScrollSpeed / cam.zoom;
-
-    // Edge scrolling
-    if (this.mouseScreenPos.x < this.edgeScrollMargin) cam.x -= speed;
-    if (this.mouseScreenPos.x > this.canvas.width - this.edgeScrollMargin) cam.x += speed;
-    if (this.mouseScreenPos.y < this.edgeScrollMargin) cam.y -= speed;
-    if (this.mouseScreenPos.y > this.canvas.height - this.edgeScrollMargin) cam.y += speed;
 
     // Arrow key + WASD scrolling
     if (this.keysDown.has('ArrowLeft') || this.keysDown.has('a') || this.keysDown.has('A')) cam.x -= speed;

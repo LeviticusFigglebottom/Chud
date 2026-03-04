@@ -40,6 +40,13 @@ const WORKER_TYPES: Record<string, string> = {
   chads: "chad_gym_rat",
 };
 
+const HERO_TYPES: Record<string, string> = {
+  chuds: "chud_pepe_lord",
+  chosen: "chosen_rothschild",
+  crusaders: "crusader_chad_thundercock",
+  chads: "chad_gigachad",
+};
+
 export default function GameView({ settings, onExit }: GameViewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const minimapRef = useRef<HTMLCanvasElement>(null);
@@ -54,6 +61,7 @@ export default function GameView({ settings, onExit }: GameViewProps) {
   const [paused, setPaused] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [winner, setWinner] = useState("");
+  const [inputMode, setInputMode] = useState("normal");
 
   const initGame = useCallback(() => {
     if (!canvasRef.current || !minimapRef.current) return;
@@ -120,7 +128,7 @@ export default function GameView({ settings, onExit }: GameViewProps) {
     const engine = new GameEngine(config, players, map);
     engineRef.current = engine;
 
-    // Spawn starting bases and workers
+    // Spawn starting bases, workers, and hero
     const p1Pos = startPositions[0];
     engine.spawnBuilding(MAIN_BUILDINGS[playerFaction], playerFaction, p1Pos, "player1", true);
     for (let i = 0; i < 5; i++) {
@@ -128,6 +136,15 @@ export default function GameView({ settings, onExit }: GameViewProps) {
         WORKER_TYPES[playerFaction],
         playerFaction,
         { x: p1Pos.x + 110 + (i % 3) * 25, y: p1Pos.y + 40 + Math.floor(i / 3) * 25 },
+        "player1"
+      );
+    }
+    // Spawn faction hero
+    if (HERO_TYPES[playerFaction]) {
+      engine.spawnUnit(
+        HERO_TYPES[playerFaction],
+        playerFaction,
+        { x: p1Pos.x + 50, y: p1Pos.y + 110 },
         "player1"
       );
     }
@@ -139,6 +156,15 @@ export default function GameView({ settings, onExit }: GameViewProps) {
         WORKER_TYPES[enemyFaction],
         enemyFaction,
         { x: p2Pos.x + 110 + (i % 3) * 25, y: p2Pos.y + 40 + Math.floor(i / 3) * 25 },
+        "player2"
+      );
+    }
+    // Spawn enemy hero
+    if (HERO_TYPES[enemyFaction]) {
+      engine.spawnUnit(
+        HERO_TYPES[enemyFaction],
+        enemyFaction,
+        { x: p2Pos.x + 50, y: p2Pos.y + 110 },
         "player2"
       );
     }
@@ -156,6 +182,10 @@ export default function GameView({ settings, onExit }: GameViewProps) {
 
     input.onSelectionChange = (entities) => {
       setSelectedEntities([...entities]);
+    };
+
+    input.onModeChange = (mode) => {
+      setInputMode(mode);
     };
 
     // Game loop
@@ -234,6 +264,7 @@ export default function GameView({ settings, onExit }: GameViewProps) {
         paused={paused}
         selectedEntities={selectedEntities}
         faction={settings.faction}
+        inputMode={inputMode}
         onTrainUnit={(unitType) => inputRef.current?.trainUnit(unitType)}
         onBuildBuilding={(buildingType) => inputRef.current?.startBuildingPlacement(buildingType)}
         onTogglePause={() => {
@@ -242,6 +273,11 @@ export default function GameView({ settings, onExit }: GameViewProps) {
           }
         }}
         onExit={onExit}
+        onMoveCommand={() => inputRef.current?.startMoveMode()}
+        onAttackCommand={() => inputRef.current?.startAttackMove()}
+        onStopCommand={() => inputRef.current?.issueStopCommand()}
+        onPatrolCommand={() => inputRef.current?.startPatrolMode()}
+        onAbilityCommand={(abilityId) => inputRef.current?.startAbilityTarget(abilityId)}
       />
 
       {/* Victory / Defeat overlay */}

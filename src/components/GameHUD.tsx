@@ -1,6 +1,6 @@
 "use client";
 
-import { RefObject } from "react";
+import React, { RefObject } from "react";
 import { Entity, Unit, Building, Resources, FactionId } from "@/game/engine/types";
 import {
   getFactionBuildings,
@@ -15,10 +15,16 @@ interface GameHUDProps {
   paused: boolean;
   selectedEntities: Entity[];
   faction: FactionId;
+  inputMode: string;
   onTrainUnit: (unitType: string) => void;
   onBuildBuilding: (buildingType: string) => void;
   onTogglePause: () => void;
   onExit: () => void;
+  onMoveCommand: () => void;
+  onAttackCommand: () => void;
+  onStopCommand: () => void;
+  onPatrolCommand: () => void;
+  onAbilityCommand: (abilityId: string) => void;
 }
 
 // =====================================================
@@ -35,10 +41,16 @@ export default function GameHUD({
   paused,
   selectedEntities,
   faction,
+  inputMode,
   onTrainUnit,
   onBuildBuilding,
   onTogglePause,
   onExit,
+  onMoveCommand,
+  onAttackCommand,
+  onStopCommand,
+  onPatrolCommand,
+  onAbilityCommand,
 }: GameHUDProps) {
   const minutes = Math.floor(gameTime / 60);
   const seconds = Math.floor(gameTime % 60);
@@ -165,8 +177,14 @@ export default function GameHUD({
             <CommandPanelWC3
               selectedEntities={selectedEntities}
               faction={faction}
+              inputMode={inputMode}
               onTrainUnit={onTrainUnit}
               onBuildBuilding={onBuildBuilding}
+              onMoveCommand={onMoveCommand}
+              onAttackCommand={onAttackCommand}
+              onStopCommand={onStopCommand}
+              onPatrolCommand={onPatrolCommand}
+              onAbilityCommand={onAbilityCommand}
             />
           </div>
         </div>
@@ -314,14 +332,28 @@ function BuildingInfoWC3({ building }: { building: Building }) {
 function CommandPanelWC3({
   selectedEntities,
   faction,
+  inputMode,
   onTrainUnit,
   onBuildBuilding,
+  onMoveCommand,
+  onAttackCommand,
+  onStopCommand,
+  onPatrolCommand,
+  onAbilityCommand,
 }: {
   selectedEntities: Entity[];
   faction: FactionId;
+  inputMode: string;
   onTrainUnit: (unitType: string) => void;
   onBuildBuilding: (buildingType: string) => void;
+  onMoveCommand: () => void;
+  onAttackCommand: () => void;
+  onStopCommand: () => void;
+  onPatrolCommand: () => void;
+  onAbilityCommand: (abilityId: string) => void;
 }) {
+  const [showBuildMenu, setShowBuildMenu] = React.useState(false);
+
   const selectedBuilding = selectedEntities.length === 1 && selectedEntities[0].type === "building"
     ? selectedEntities[0] as Building : null;
   const selectedUnits = selectedEntities.filter(e => e.type === "unit") as Unit[];
@@ -351,7 +383,6 @@ function CommandPanelWC3({
               />
             );
           })}
-          {/* Fill empty slots */}
           {Array.from({ length: Math.max(0, 12 - def.trains.length) }).map((_, i) => (
             <div key={`empty-${i}`} className="wc3-cmd-btn wc3-cmd-btn-empty" />
           ))}
@@ -360,23 +391,85 @@ function CommandPanelWC3({
     );
   }
 
-  // Workers selected - show build options
-  if (hasWorkers) {
-    const buildings = getFactionBuildings(faction);
+  // Units selected - show action buttons + abilities
+  if (selectedUnits.length > 0) {
+    // Worker build menu mode
+    if (hasWorkers && showBuildMenu) {
+      const buildings = getFactionBuildings(faction);
+      return (
+        <div className="wc3-cmd-grid-wrapper">
+          <div className="wc3-cmd-grid">
+            <ActionButton icon="<" label="Back" hotkey="" onClick={() => setShowBuildMenu(false)}
+              active={false} tooltip="Return to actions" />
+            {buildings.map(bdef => (
+              <CmdButton
+                key={bdef.id}
+                icon={bdef.icon}
+                name={bdef.name}
+                cost={bdef.cost}
+                onClick={() => { onBuildBuilding(bdef.id); setShowBuildMenu(false); }}
+                tooltip={`${bdef.name} - ${bdef.description}`}
+              />
+            ))}
+            {Array.from({ length: Math.max(0, 11 - getFactionBuildings(faction).length) }).map((_, i) => (
+              <div key={`empty-${i}`} className="wc3-cmd-btn wc3-cmd-btn-empty" />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Collect all unique abilities from selected units
+    const abilities: { id: string; name: string; icon: string; cooldown: number }[] = [];
+    const seenAbilities = new Set<string>();
+    for (const u of selectedUnits) {
+      for (const ab of u.abilities) {
+        if (!seenAbilities.has(ab.id)) {
+          seenAbilities.add(ab.id);
+          abilities.push({ id: ab.id, name: ab.name, icon: ab.icon, cooldown: ab.currentCooldown });
+        }
+      }
+    }
+
+    const actionButtons: React.ReactNode[] = [
+      <ActionButton key="move" icon="M" label="Move" hotkey="M" onClick={onMoveCommand}
+        active={false} tooltip="Move (M) - Right-click to move" />,
+      <ActionButton key="stop" icon="H" label="Stop" hotkey="H" onClick={onStopCommand}
+        active={false} tooltip="Stop/Hold (H)" />,
+      <ActionButton key="attack" icon="A" label="Attack" hotkey="A" onClick={onAttackCommand}
+        active={inputMode === 'attack_move'} tooltip="Attack Move (A) - Click target or ground" />,
+      <ActionButton key="patrol" icon="P" label="Patrol" hotkey="P" onClick={onPatrolCommand}
+        active={inputMode === 'patrol_target'} tooltip="Patrol (P) - Click destination" />,
+    ];
+
+    // Add build button for workers
+    if (hasWorkers) {
+      actionButtons.push(
+        <ActionButton key="build" icon="B" label="Build" hotkey="B" onClick={() => setShowBuildMenu(true)}
+          active={false} tooltip="Open Build Menu" />
+      );
+    }
+
+    // Add abilities
+    for (const ab of abilities) {
+      actionButtons.push(
+        <ActionButton key={ab.id} icon={ab.icon} label={ab.name} hotkey=""
+          onClick={() => onAbilityCommand(ab.id)}
+          active={false}
+          tooltip={ab.name}
+          cooldown={ab.cooldown > 0 ? Math.ceil(ab.cooldown) : undefined} />
+      );
+    }
+
+    // Fill to 12
+    const totalSlots = 12;
+    const emptyCount = Math.max(0, totalSlots - actionButtons.length);
+
     return (
       <div className="wc3-cmd-grid-wrapper">
         <div className="wc3-cmd-grid">
-          {buildings.map(bdef => (
-            <CmdButton
-              key={bdef.id}
-              icon={bdef.icon}
-              name={bdef.name}
-              cost={bdef.cost}
-              onClick={() => onBuildBuilding(bdef.id)}
-              tooltip={`${bdef.name} - ${bdef.description}`}
-            />
-          ))}
-          {Array.from({ length: Math.max(0, 12 - buildings.length) }).map((_, i) => (
+          {actionButtons}
+          {Array.from({ length: emptyCount }).map((_, i) => (
             <div key={`empty-${i}`} className="wc3-cmd-btn wc3-cmd-btn-empty" />
           ))}
         </div>
@@ -396,6 +489,28 @@ function EmptyGrid() {
         ))}
       </div>
     </div>
+  );
+}
+
+function ActionButton({
+  icon, label, hotkey, onClick, active, tooltip, cooldown,
+}: {
+  icon: string; label: string; hotkey: string;
+  onClick: () => void; active: boolean; tooltip: string;
+  cooldown?: number;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`wc3-cmd-btn ${active ? 'wc3-cmd-btn-active' : ''}`}
+      title={tooltip}
+    >
+      <div className="wc3-cmd-btn-icon">{icon}</div>
+      <div className="wc3-cmd-btn-cost">{hotkey || label}</div>
+      {cooldown !== undefined && cooldown > 0 && (
+        <div className="wc3-cmd-btn-cooldown">{cooldown}</div>
+      )}
+    </button>
   );
 }
 

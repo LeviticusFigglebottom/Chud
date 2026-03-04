@@ -28,6 +28,34 @@ const FACTION_PALETTE: Record<string, { primary: string; secondary: string; acce
   neutral:   { primary: '#888888', secondary: '#666666', accent: '#aaaaaa', dark: '#333333' },
 };
 
+// Per-unit-type color overrides for distinct visual identity
+const UNIT_TYPE_COLORS: Record<string, Partial<typeof FACTION_PALETTE.chuds>> = {
+  // Chuds
+  chud_neet:             { primary: '#8B6530', secondary: '#6b4520', accent: '#a08040' },
+  chud_keyboard_warrior: { primary: '#A0522D', secondary: '#804020', accent: '#cc8844' },
+  chud_doomer:           { primary: '#2F2F3F', secondary: '#1a1a2a', accent: '#6060a0' },
+  chud_reddit_mod:       { primary: '#CC4500', secondary: '#993300', accent: '#FF6633' },
+  chud_pepe_lord:        { primary: '#4CAF50', secondary: '#2E7D32', accent: '#81C784' },
+  // Chosen
+  chosen_merchant:       { primary: '#DAA520', secondary: '#B8900A', accent: '#FFD700' },
+  chosen_lawyer:         { primary: '#808890', secondary: '#606870', accent: '#C0C8D0' },
+  chosen_media_mogul:    { primary: '#4169E1', secondary: '#2040A0', accent: '#6090FF' },
+  chosen_space_laser:    { primary: '#9400D3', secondary: '#6A00A0', accent: '#C060FF' },
+  chosen_rothschild:     { primary: '#FFD700', secondary: '#CCA000', accent: '#FFEE44' },
+  // Crusaders
+  crusader_simp:         { primary: '#FF69B4', secondary: '#CC4488', accent: '#FFB0D0' },
+  crusader_paladin:      { primary: '#B0B0C0', secondary: '#808898', accent: '#D0D0E0' },
+  crusader_egirl_healer: { primary: '#DA70D6', secondary: '#AA40A6', accent: '#EE90EA' },
+  crusader_mega_simp:    { primary: '#FF1493', secondary: '#CC0070', accent: '#FF60B0' },
+  crusader_chad_thundercock: { primary: '#FFD700', secondary: '#CCA000', accent: '#FFE844' },
+  // Chads
+  chad_gym_rat:          { primary: '#FF8C00', secondary: '#CC6600', accent: '#FFB040' },
+  chad_bro:              { primary: '#FF4500', secondary: '#CC2200', accent: '#FF7744' },
+  chad_protein_shaker:   { primary: '#32CD32', secondary: '#20A020', accent: '#60EE60' },
+  chad_sigma:            { primary: '#4B0082', secondary: '#300060', accent: '#8040C0' },
+  chad_gigachad:         { primary: '#DAA520', secondary: '#B08010', accent: '#FFCC44' },
+};
+
 const FOG_COLORS = {
   hidden: 'rgba(0, 0, 0, 0.95)',
   explored: 'rgba(0, 0, 0, 0.55)',
@@ -902,20 +930,63 @@ export class Renderer {
     ctx.fill();
 
     const unitDef = getUnitDefinition(unit.unitType);
-    const isWorker = unitDef && !unitDef.isHero && unitDef.damage <= 12;
-    const isRanged = unitDef && unitDef.attackRange > 100 && !unitDef.isHero;
-    const isSiege = unitDef && unitDef.populationCost >= 4 && !unitDef.isHero;
+
+    // Unit-type-specific drawing with unique colors and details per type
+    const unitColors = UNIT_TYPE_COLORS[unit.unitType];
+    const drawPalette = unitColors ? { ...palette, ...unitColors } : palette;
 
     if (unit.isHero) {
-      this.drawHeroUnit(ctx, x, y + bob, radius, palette, unit, attackFlash);
-    } else if (isWorker) {
-      this.drawWorkerUnit(ctx, x, y + bob, radius, palette, unit);
-    } else if (isSiege) {
-      this.drawSiegeUnit(ctx, x, y + bob, radius, palette, unit, attackFlash);
-    } else if (isRanged) {
-      this.drawRangedUnit(ctx, x, y + bob, radius, palette, unit, attackFlash);
+      this.drawHeroUnit(ctx, x, y + bob, radius, drawPalette, unit, attackFlash);
     } else {
-      this.drawMeleeUnit(ctx, x, y + bob, radius, palette, unit, attackFlash);
+      // Dispatch by specific unit type for unique silhouettes
+      switch (unit.unitType) {
+        // Workers
+        case 'chud_neet':
+        case 'chosen_merchant':
+        case 'crusader_simp':
+        case 'chad_gym_rat':
+          this.drawWorkerUnit(ctx, x, y + bob, radius, drawPalette, unit);
+          break;
+        // Melee
+        case 'chud_keyboard_warrior':
+        case 'crusader_paladin':
+        case 'chad_bro':
+          this.drawMeleeUnit(ctx, x, y + bob, radius, drawPalette, unit, attackFlash);
+          break;
+        // Ranged/Caster
+        case 'chud_doomer':
+        case 'chosen_lawyer':
+        case 'chosen_media_mogul':
+        case 'chad_protein_shaker':
+        case 'crusader_egirl_healer':
+          this.drawRangedUnit(ctx, x, y + bob, radius, drawPalette, unit, attackFlash);
+          break;
+        // Siege/Elite
+        case 'chud_reddit_mod':
+        case 'chosen_space_laser':
+        case 'crusader_mega_simp':
+        case 'chad_sigma':
+          this.drawSiegeUnit(ctx, x, y + bob, radius, drawPalette, unit, attackFlash);
+          break;
+        default: {
+          // Fallback category-based
+          const isWorker = unitDef && !unitDef.isHero && unitDef.damage <= 12;
+          const isRanged = unitDef && unitDef.attackRange > 100;
+          const isSiege = unitDef && unitDef.populationCost >= 4;
+          if (isWorker) this.drawWorkerUnit(ctx, x, y + bob, radius, drawPalette, unit);
+          else if (isSiege) this.drawSiegeUnit(ctx, x, y + bob, radius, drawPalette, unit, attackFlash);
+          else if (isRanged) this.drawRangedUnit(ctx, x, y + bob, radius, drawPalette, unit, attackFlash);
+          else this.drawMeleeUnit(ctx, x, y + bob, radius, drawPalette, unit, attackFlash);
+        }
+      }
+    }
+
+    // Unit name label (visible when selected or hovered nearby)
+    if (unit.selected && unitDef) {
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(unitDef.name, x, y + radius + 12 + bob);
     }
 
     // Selection ring

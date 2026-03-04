@@ -74,9 +74,13 @@ export function generateDiscourseArena(config: GameConfig): Tile[][] {
   const rng = new SeededRandom(42069);
   const map: Tile[][] = [];
 
-  // Base terrain
+  // Pre-initialize all rows so mountain cluster lookAhead works
   for (let y = 0; y < mapHeight; y++) {
     map[y] = [];
+  }
+
+  // Base terrain
+  for (let y = 0; y < mapHeight; y++) {
     for (let x = 0; x < mapWidth; x++) {
       const distToCenter = Math.sqrt(
         Math.pow(x - mapWidth / 2, 2) + Math.pow(y - mapHeight / 2, 2)

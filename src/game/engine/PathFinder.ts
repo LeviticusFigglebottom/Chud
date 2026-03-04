@@ -35,9 +35,16 @@ export class PathFinder {
     if (!this.isWalkable(endTile.x, endTile.y)) {
       // Find nearest walkable tile to destination
       const nearest = this.findNearestWalkable(endTile);
-      if (!nearest) return [end]; // just try to go there directly
+      if (!nearest) return []; // no valid destination
       endTile.x = nearest.x;
       endTile.y = nearest.y;
+    }
+
+    if (!this.isWalkable(startTile.x, startTile.y)) {
+      const nearest = this.findNearestWalkable(startTile);
+      if (!nearest) return [];
+      startTile.x = nearest.x;
+      startTile.y = nearest.y;
     }
 
     if (startTile.x === endTile.x && startTile.y === endTile.y) {
@@ -113,8 +120,8 @@ export class PathFinder {
       }
     }
 
-    // No path found, return direct line
-    return [end];
+    // No path found - return empty (don't walk through obstacles)
+    return [];
   }
 
   private heuristic(a: { x: number; y: number }, b: { x: number; y: number }): number {
@@ -183,6 +190,13 @@ export class PathFinder {
   private isWalkable(x: number, y: number): boolean {
     if (x < 0 || y < 0 || x >= this.width || y >= this.height) return false;
     return this.grid[y]?.[x]?.walkable ?? false;
+  }
+
+  findNearestWalkableWorld(worldPos: Vector2): Vector2 | null {
+    const tilePos = this.worldToTile(worldPos);
+    const nearest = this.findNearestWalkable(tilePos);
+    if (!nearest) return null;
+    return this.tileToWorld(nearest.x, nearest.y);
   }
 
   private findNearestWalkable(pos: { x: number; y: number }): { x: number; y: number } | null {

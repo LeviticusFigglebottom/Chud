@@ -33,8 +33,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "camera",
     title: "Camera Controls",
-    description: "Move your view with WASD keys or by moving the mouse to the screen edges. Arrow keys also work. Scroll the mouse wheel to zoom in and out.",
-    instruction: "Try moving the camera around, then press NEXT.",
+    description: "Move your view with WASD keys or Arrow keys. Scroll the mouse wheel to zoom in and out. Mouse edge scrolling is disabled - use keyboard controls only.",
+    instruction: "Try moving the camera around with WASD, then press NEXT.",
     highlight: "map",
     autoComplete: 0,
   },
@@ -67,7 +67,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "gather_resources",
     title: "Gathering Resources",
-    description: "Your economy runs on three resources: Copium (blue crystals), Clout (golden trees), and Tendies (rare chicken). Workers gather resources when you right-click on a resource node.",
+    description: "Your economy runs on three resources: Copium (blue crystals, ~1000 each), Clout (golden trees), and Tendies (rare chicken). Workers gather resources when you right-click on a resource node. When a resource is depleted, workers automatically move to the nearest available one.",
     instruction: "Select a worker and right-click on a blue Copium crystal or golden Clout tree nearby.",
     highlight: "resources",
     checkComplete: (engine) => {
@@ -84,8 +84,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "select_building",
     title: "Buildings and Training",
-    description: "Click on your main building (the large structure) to select it. The command panel at the bottom-right will show what units it can train.",
-    instruction: "Click on your main building to select it.",
+    description: "Left-click on your main building (the large structure near your workers) to select it. The command panel at the bottom-right will show what units it can train.",
+    instruction: "Left-click directly on your main building to select it.",
     highlight: "commands",
     checkComplete: (engine) => {
       for (const id of engine.state.selectedEntities) {
@@ -114,7 +114,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "build_structure",
     title: "Constructing Buildings",
-    description: "Select a worker and look at the command panel. It shows buildings your faction can construct. Click a building button, then click on the map to place it.",
+    description: "Select a worker and click the Build icon (hammer) in the command panel, or press B. This opens the build menu showing available structures. Click one, then click on the map to place it. Buildings cannot be placed on water or mountains.",
     instruction: "Select a worker and try building a supply structure (Tendie Stand / Investment Portfolio / Simp Barracks / Protein Locker).",
     highlight: "commands",
     autoComplete: 0,
@@ -130,14 +130,14 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "combat",
     title: "Combat",
-    description: "To attack enemies, select your military units and right-click on an enemy. Units will auto-attack nearby enemies. Press H to stop/hold a unit. Use control groups (Ctrl+1-5 to assign, 1-5 to recall) to manage your army.",
+    description: "To attack enemies, select military units and right-click on an enemy, or press A then click the ground to attack-move. Press M then click to issue a move command. Press P to patrol. Press H to stop/hold. Use control groups (Ctrl+1-5 to assign, 1-5 to recall). Units cannot walk through water - pathfinding routes around obstacles.",
     instruction: "Press NEXT when ready.",
     autoComplete: 0,
   },
   {
     id: "pause",
     title: "Pausing the Game",
-    description: "Press Space to pause/resume the game at any time. This gives you time to think and issue commands. Use the Pause button in the bottom-right corner.",
+    description: "Press Space to pause/resume the game at any time. This gives you time to think and issue commands. Use the Pause button in the top bar.",
     instruction: "Press NEXT when ready.",
     autoComplete: 0,
   },

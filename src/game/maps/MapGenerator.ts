@@ -45,7 +45,7 @@ function placeResourceCluster(
   count: number,
   rng: SeededRandom,
 ): void {
-  const amounts = { copium: 2500, clout: 1500, tendies: 500 };
+  const amounts = { copium: 1000, clout: 1500, tendies: 500 };
 
   for (let i = 0; i < count; i++) {
     const dx = rng.nextInt(-2, 2);
@@ -53,6 +53,8 @@ function placeResourceCluster(
     const x = centerX + dx;
     const y = centerY + dy;
     if (y >= 0 && y < map.length && x >= 0 && x < map[0].length) {
+      // Don't place resources on water or mountain
+      if (map[y][x].terrain === 'water' || map[y][x].terrain === 'mountain') continue;
       map[y][x].resource = {
         type,
         amount: amounts[type] + rng.nextInt(-200, 200),
@@ -62,6 +64,7 @@ function placeResourceCluster(
       map[y][x].walkable = true;
       map[y][x].buildable = false;
       map[y][x].terrain = type === 'copium' ? 'dirt' : type === 'clout' ? 'grass' : 'meme_zone';
+      map[y][x].decoration = undefined;
     }
   }
 }
@@ -153,11 +156,32 @@ export function generateDiscourseArena(config: GameConfig): Tile[][] {
   // Center tendies (contested)
   placeResourceCluster(map, cx, cy, 'tendies', 4, rng);
 
-  // Random decorations (trees etc)
+  // Random decorations (trees etc) - only on walkable land tiles
   for (let y = 0; y < mapHeight; y++) {
     for (let x = 0; x < mapWidth; x++) {
-      if (map[y][x].terrain === 'grass' && rng.next() > 0.95) {
+      if (map[y][x].terrain === 'grass' && map[y][x].walkable && !map[y][x].resource && rng.next() > 0.95) {
         map[y][x].decoration = rng.next() > 0.5 ? 'tree' : 'bush';
+      }
+    }
+  }
+
+  // Clear terrain around player start positions to ensure no water/mountains
+  const startCorners = [
+    { x: Math.floor(mapWidth * 0.15), y: Math.floor(mapHeight * 0.15) },
+    { x: Math.floor(mapWidth * 0.85), y: Math.floor(mapHeight * 0.85) },
+    { x: Math.floor(mapWidth * 0.85), y: Math.floor(mapHeight * 0.15) },
+    { x: Math.floor(mapWidth * 0.15), y: Math.floor(mapHeight * 0.85) },
+  ];
+  for (const sc of startCorners) {
+    for (let dy = -5; dy <= 5; dy++) {
+      for (let dx = -5; dx <= 5; dx++) {
+        const tx = sc.x + dx;
+        const ty = sc.y + dy;
+        if (ty >= 0 && ty < mapHeight && tx >= 0 && tx < mapWidth) {
+          if (map[ty][tx].terrain === 'water' || map[ty][tx].terrain === 'mountain') {
+            map[ty][tx] = createEmptyTile('grass');
+          }
+        }
       }
     }
   }

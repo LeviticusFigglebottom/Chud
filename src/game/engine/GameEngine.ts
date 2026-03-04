@@ -64,6 +64,18 @@ export class GameEngine {
     const def = getUnitDefinition(unitType);
     if (!def) return null;
 
+    // Ensure spawn position is on walkable terrain
+    const tileX = Math.floor(position.x / this.state.config.tileSize);
+    const tileY = Math.floor(position.y / this.state.config.tileSize);
+    const tile = this.state.map[tileY]?.[tileX];
+    if (tile && !tile.walkable) {
+      // Find nearest walkable tile
+      const nearest = this.pathFinder.findNearestWalkableWorld(position);
+      if (nearest) {
+        position = nearest;
+      }
+    }
+
     const unit: Unit = {
       id: generateId(),
       type: 'unit',
@@ -507,8 +519,22 @@ export class GameEngine {
   getEntitiesAt(pos: Vector2, radius: number): Entity[] {
     const result: Entity[] = [];
     for (const [, entity] of this.state.entities) {
-      if (this.distanceBetween(entity.position, pos) <= radius) {
-        result.push(entity);
+      if (entity.type === 'building') {
+        // Check if click is inside building bounding box (with some margin)
+        const margin = radius;
+        if (pos.x >= entity.position.x - margin &&
+            pos.x <= entity.position.x + entity.size.x + margin &&
+            pos.y >= entity.position.y - margin &&
+            pos.y <= entity.position.y + entity.size.y + margin) {
+          result.push(entity);
+        }
+      } else {
+        // Units/projectiles: distance from center
+        const cx = entity.position.x + entity.size.x / 2;
+        const cy = entity.position.y + entity.size.y / 2;
+        if (this.distanceBetween({ x: cx, y: cy }, pos) <= radius + Math.max(entity.size.x, entity.size.y) / 2) {
+          result.push(entity);
+        }
       }
     }
     return result;

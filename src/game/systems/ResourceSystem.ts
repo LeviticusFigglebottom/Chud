@@ -64,9 +64,16 @@ export class ResourceSystem {
             unit.path = this.engine.pathFinder.findPath(unit.position, dropOff.position);
           }
         } else {
-          // Resource depleted
-          unit.state = 'idle';
-          unit.target = undefined;
+          // Resource depleted - find nearest available resource of same type
+          const depletedType = tile?.resource?.type;
+          const nearest = this.findNearestResourceOfType(unit.position, depletedType);
+          if (nearest) {
+            unit.target = nearest;
+            unit.path = this.engine.pathFinder.findPath(unit.position, nearest);
+          } else {
+            unit.state = 'idle';
+            unit.target = undefined;
+          }
         }
       }
     }
@@ -88,6 +95,28 @@ export class ResourceSystem {
       if (dist < nearestDist) {
         nearestDist = dist;
         nearest = building;
+      }
+    }
+    return nearest;
+  }
+
+  private findNearestResourceOfType(from: Vector2, type?: string): Vector2 | null {
+    const map = this.engine.state.map;
+    const tileSize = this.engine.state.config.tileSize;
+    let nearest: Vector2 | null = null;
+    let nearestDist = Infinity;
+
+    for (let y = 0; y < map.length; y++) {
+      for (let x = 0; x < map[y].length; x++) {
+        const res = map[y][x].resource;
+        if (!res || res.amount <= 0) continue;
+        if (type && res.type !== type) continue;
+        const pos = { x: x * tileSize + tileSize / 2, y: y * tileSize + tileSize / 2 };
+        const dist = this.engine.distanceBetween(from, pos);
+        if (dist < nearestDist) {
+          nearestDist = dist;
+          nearest = pos;
+        }
       }
     }
     return nearest;

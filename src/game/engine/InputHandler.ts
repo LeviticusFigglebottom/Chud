@@ -219,29 +219,42 @@ export class InputHandler {
 
   private clickSelect(e: MouseEvent): void {
     const worldPos = this.engine.screenToWorld(e.offsetX, e.offsetY);
-    const entities = this.engine.getEntitiesAt(worldPos, 20);
 
     if (!this.keysDown.has('Shift')) {
       this.clearSelection();
     }
 
+    const localPlayer = this.engine.state.players.find(p => p.id === this.engine.state.localPlayerId);
+    if (!localPlayer) { this.notifySelectionChange(); return; }
+
+    // 1) Check if click is directly inside any own building's bounding box
+    let clickedBuilding: import('./types').Entity | null = null;
+    for (const entityId of localPlayer.entities) {
+      const entity = this.engine.state.entities.get(entityId);
+      if (!entity || entity.type !== 'building') continue;
+      if (worldPos.x >= entity.position.x &&
+          worldPos.x <= entity.position.x + entity.size.x &&
+          worldPos.y >= entity.position.y &&
+          worldPos.y <= entity.position.y + entity.size.y) {
+        clickedBuilding = entity;
+        break;
+      }
+    }
+
+    if (clickedBuilding) {
+      clickedBuilding.selected = true;
+      if (!this.engine.state.selectedEntities.includes(clickedBuilding.id)) {
+        this.engine.state.selectedEntities.push(clickedBuilding.id);
+      }
+      this.notifySelectionChange();
+      return;
+    }
+
+    // 2) Otherwise, find nearby entities via radius search
+    const entities = this.engine.getEntitiesAt(worldPos, 20);
     if (entities.length > 0) {
-      const localPlayer = this.engine.state.players.find(p => p.id === this.engine.state.localPlayerId);
-
-      // Filter to own entities
-      const ownEntities = entities.filter(entity => localPlayer?.entities.includes(entity.id));
-
-      // Prefer buildings if click is directly inside a building's bounds
-      const clickedBuilding = ownEntities.find(entity => {
-        if (entity.type !== 'building') return false;
-        return worldPos.x >= entity.position.x &&
-               worldPos.x <= entity.position.x + entity.size.x &&
-               worldPos.y >= entity.position.y &&
-               worldPos.y <= entity.position.y + entity.size.y;
-      });
-
-      // Prefer own units unless we directly clicked inside a building
-      const target = clickedBuilding || ownEntities.find(e => e.type === 'unit') || ownEntities[0] || entities[0];
+      const ownEntities = entities.filter(entity => localPlayer.entities.includes(entity.id));
+      const target = ownEntities.find(e => e.type === 'unit') || ownEntities[0] || entities[0];
 
       target.selected = true;
       if (!this.engine.state.selectedEntities.includes(target.id)) {

@@ -28,8 +28,18 @@ export class ResourceSystem {
       const dropOff = this.findNearestDropOff(unit, owner);
       if (!dropOff) return;
 
-      const dist = this.engine.distanceBetween(unit.position, dropOff.position);
-      if (dist < 40) {
+      // Path to center of building, drop off when near any part of building
+      const buildingCenterX = dropOff.position.x + dropOff.size.x / 2;
+      const buildingCenterY = dropOff.position.y + dropOff.size.y / 2;
+      const buildingCenter = { x: buildingCenterX, y: buildingCenterY };
+
+      // Check if unit is close to any edge of the building (not just top-left corner)
+      const nearBuilding = unit.position.x >= dropOff.position.x - 30 &&
+                          unit.position.x <= dropOff.position.x + dropOff.size.x + 30 &&
+                          unit.position.y >= dropOff.position.y - 30 &&
+                          unit.position.y <= dropOff.position.y + dropOff.size.y + 30;
+
+      if (nearBuilding) {
         // Drop off resources
         const type = unit.carryingResource.type;
         owner.resources[type] += unit.carryingResource.amount;
@@ -40,7 +50,7 @@ export class ResourceSystem {
           unit.path = this.engine.pathFinder.findPath(unit.position, unit.target);
         }
       } else if (unit.path.length === 0) {
-        unit.path = this.engine.pathFinder.findPath(unit.position, dropOff.position);
+        unit.path = this.engine.pathFinder.findPath(unit.position, buildingCenter);
       }
     } else {
       // Find resource to gather
@@ -91,7 +101,12 @@ export class ResourceSystem {
       if (!def?.isResourceDrop) continue;
       if (building.state === 'constructing' || building.state === 'destroyed') continue;
 
-      const dist = this.engine.distanceBetween(unit.position, building.position);
+      // Use center of building for distance calculation
+      const center = {
+        x: building.position.x + building.size.x / 2,
+        y: building.position.y + building.size.y / 2,
+      };
+      const dist = this.engine.distanceBetween(unit.position, center);
       if (dist < nearestDist) {
         nearestDist = dist;
         nearest = building;

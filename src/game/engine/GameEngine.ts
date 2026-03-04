@@ -400,17 +400,22 @@ export class GameEngine {
         }
       }
 
-      // Simple separation: push apart from nearby same-team units
+      // Simple separation: push apart from nearby units
+      // Workers gathering/returning resources get reduced separation so they don't get stuck
+      const isGathering = unit.state === 'gathering' || unit.state === 'building';
       for (const [, other] of this.state.entities) {
         if (other.type !== 'unit' || other.id === entity.id) continue;
         const ou = other as Unit;
         if (ou.state === 'dead') continue;
+        // Skip separation between two gathering workers to avoid gridlock at resources/drop-offs
+        const otherGathering = ou.state === 'gathering' || ou.state === 'building';
+        if (isGathering && otherGathering) continue;
         const dx2 = unit.position.x - ou.position.x;
         const dy2 = unit.position.y - ou.position.y;
         const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-        const minDist = 18; // minimum separation distance
+        const minDist = isGathering ? 10 : 18;
         if (dist2 > 0 && dist2 < minDist) {
-          const pushForce = (minDist - dist2) * 0.3;
+          const pushForce = (minDist - dist2) * (isGathering ? 0.15 : 0.3);
           const nx = dx2 / dist2;
           const ny = dy2 / dist2;
           unit.position.x += nx * pushForce;

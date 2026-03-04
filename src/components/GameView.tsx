@@ -71,13 +71,13 @@ export default function GameView({ settings, onExit }: GameViewProps) {
     const canvas = canvasRef.current;
     const minimap = minimapRef.current;
 
-    const topBarHeight = 28;
-    const bottomPanelHeight = 200;
-    const hudHeight = topBarHeight + bottomPanelHeight;
+    const topPanelHeight = 160;
+    const bottomPanelHeight = 80;
+    const hudHeight = topPanelHeight + bottomPanelHeight;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight - hudHeight;
-    minimap.width = 176;
-    minimap.height = 176;
+    minimap.width = 140;
+    minimap.height = 140;
 
     const mapDims = getMapDimensions(settings.mapSize || 'medium');
     const config: GameConfig = {
@@ -248,7 +248,7 @@ export default function GameView({ settings, onExit }: GameViewProps) {
 
     const handleResize = () => {
       canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight - topBarHeight - bottomPanelHeight;
+      canvas.height = window.innerHeight - topPanelHeight - bottomPanelHeight;
       engine.state.camera.width = canvas.width;
       engine.state.camera.height = canvas.height;
       renderer.resize(canvas.width, canvas.height);
@@ -269,10 +269,6 @@ export default function GameView({ settings, onExit }: GameViewProps) {
 
   return (
     <div className="w-full h-full flex flex-col relative" style={{ background: "#0a0908" }}>
-      {/* Top bar is absolute, rendered by GameHUD */}
-      <div style={{ height: 28, flexShrink: 0 }} />
-      <canvas ref={canvasRef} id="game-canvas" className="flex-1" style={{ display: "block" }} />
-
       <GameHUD
         minimapRef={minimapRef}
         resources={resources}
@@ -296,6 +292,8 @@ export default function GameView({ settings, onExit }: GameViewProps) {
         onPatrolCommand={() => inputRef.current?.startPatrolMode()}
         onAbilityCommand={(abilityId) => inputRef.current?.startAbilityTarget(abilityId)}
       />
+
+      <canvas ref={canvasRef} id="game-canvas" className="flex-1" style={{ display: "block" }} />
 
       {/* Victory / Defeat overlay */}
       {gameOver && (

@@ -169,12 +169,24 @@ export class GameEngine {
 
   processCommands(): void {
     for (const cmd of this.state.commands) {
+      // Compute formation offsets for group commands
+      const unitIds = cmd.entityIds.filter(id => {
+        const e = this.state.entities.get(id);
+        return e && e.type === 'unit';
+      });
+      const formationOffsets = cmd.target && unitIds.length > 1
+        ? this.computeFormationOffsets(unitIds.length)
+        : null;
+
+      let unitIndex = 0;
       for (const entityId of cmd.entityIds) {
         const entity = this.state.entities.get(entityId);
         if (!entity) continue;
 
         if (entity.type === 'unit') {
-          this.processUnitCommand(entity as Unit, cmd);
+          const offset = formationOffsets ? formationOffsets[unitIndex] : null;
+          this.processUnitCommand(entity as Unit, cmd, offset);
+          unitIndex++;
         } else if (entity.type === 'building') {
           this.processBuildingCommand(entity as Building, cmd);
         }
@@ -183,11 +195,36 @@ export class GameEngine {
     this.state.commands = [];
   }
 
-  private processUnitCommand(unit: Unit, cmd: Command): void {
+  // Compute grid offsets so units spread out around the target point
+  private computeFormationOffsets(count: number): Vector2[] {
+    const spacing = 40; // pixels between units
+    const cols = Math.ceil(Math.sqrt(count));
+    const offsets: Vector2[] = [];
+    for (let i = 0; i < count; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      offsets.push({
+        x: (col - (cols - 1) / 2) * spacing,
+        y: (row - (Math.ceil(count / cols) - 1) / 2) * spacing,
+      });
+    }
+    return offsets;
+  }
+
+  private processUnitCommand(unit: Unit, cmd: Command, formationOffset?: Vector2 | null): void {
+    // Apply formation offset to target if applicable
+    const applyOffset = (target: Vector2): Vector2 => {
+      if (formationOffset) {
+        return { x: target.x + formationOffset.x, y: target.y + formationOffset.y };
+      }
+      return target;
+    };
+
     switch (cmd.type) {
       case 'move':
         if (cmd.target) {
-          unit.path = this.pathFinder.findPath(unit.position, cmd.target);
+          const dest = applyOffset(cmd.target);
+          unit.path = this.pathFinder.findPath(unit.position, dest);
           unit.state = 'moving';
           unit.targetEntity = undefined;
         }
@@ -197,7 +234,8 @@ export class GameEngine {
           unit.targetEntity = cmd.targetEntityId;
           unit.state = 'attacking';
         } else if (cmd.target) {
-          unit.path = this.pathFinder.findPath(unit.position, cmd.target);
+          const dest = applyOffset(cmd.target);
+          unit.path = this.pathFinder.findPath(unit.position, dest);
           unit.state = 'moving'; // attack-move
         }
         break;
@@ -223,10 +261,11 @@ export class GameEngine {
         break;
       case 'patrol':
         if (cmd.target) {
+          const dest = applyOffset(cmd.target);
           unit.state = 'patrolling';
           unit.rallyPoint = { ...unit.position };
-          unit.target = cmd.target;
-          unit.path = this.pathFinder.findPath(unit.position, cmd.target);
+          unit.target = dest;
+          unit.path = this.pathFinder.findPath(unit.position, dest);
         }
         break;
     }
@@ -346,6 +385,24 @@ export class GameEngine {
         } else {
           unit.position.x += (dx / dist) * moveSpeed;
           unit.position.y += (dy / dist) * moveSpeed;
+        }
+      }
+
+      // Simple separation: push apart from nearby same-team units
+      for (const [, other] of this.state.entities) {
+        if (other.type !== 'unit' || other.id === entity.id) continue;
+        const ou = other as Unit;
+        if (ou.state === 'dead') continue;
+        const dx2 = unit.position.x - ou.position.x;
+        const dy2 = unit.position.y - ou.position.y;
+        const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+        const minDist = 18; // minimum separation distance
+        if (dist2 > 0 && dist2 < minDist) {
+          const pushForce = (minDist - dist2) * 0.3;
+          const nx = dx2 / dist2;
+          const ny = dy2 / dist2;
+          unit.position.x += nx * pushForce;
+          unit.position.y += ny * pushForce;
         }
       }
 

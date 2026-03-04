@@ -399,7 +399,7 @@ function CommandPanelWC3({
       return (
         <div className="wc3-cmd-grid-wrapper">
           <div className="wc3-cmd-grid">
-            <ActionButton icon="<" label="Back" hotkey="" onClick={() => setShowBuildMenu(false)}
+            <ActionButton iconType="back" label="Back" hotkey="" onClick={() => setShowBuildMenu(false)}
               active={false} tooltip="Return to actions" />
             {buildings.map(bdef => (
               <CmdButton
@@ -432,20 +432,20 @@ function CommandPanelWC3({
     }
 
     const actionButtons: React.ReactNode[] = [
-      <ActionButton key="move" icon="M" label="Move" hotkey="M" onClick={onMoveCommand}
-        active={false} tooltip="Move (M) - Right-click to move" />,
-      <ActionButton key="stop" icon="H" label="Stop" hotkey="H" onClick={onStopCommand}
+      <ActionButton key="move" iconType="move" label="Move" hotkey="M" onClick={onMoveCommand}
+        active={inputMode === 'move_target'} tooltip="Move (M) - Click destination" />,
+      <ActionButton key="stop" iconType="stop" label="Stop" hotkey="H" onClick={onStopCommand}
         active={false} tooltip="Stop/Hold (H)" />,
-      <ActionButton key="attack" icon="A" label="Attack" hotkey="A" onClick={onAttackCommand}
+      <ActionButton key="attack" iconType="attack" label="Attack" hotkey="A" onClick={onAttackCommand}
         active={inputMode === 'attack_move'} tooltip="Attack Move (A) - Click target or ground" />,
-      <ActionButton key="patrol" icon="P" label="Patrol" hotkey="P" onClick={onPatrolCommand}
+      <ActionButton key="patrol" iconType="patrol" label="Patrol" hotkey="P" onClick={onPatrolCommand}
         active={inputMode === 'patrol_target'} tooltip="Patrol (P) - Click destination" />,
     ];
 
     // Add build button for workers
     if (hasWorkers) {
       actionButtons.push(
-        <ActionButton key="build" icon="B" label="Build" hotkey="B" onClick={() => setShowBuildMenu(true)}
+        <ActionButton key="build" iconType="build" label="Build" hotkey="B" onClick={() => setShowBuildMenu(true)}
           active={false} tooltip="Open Build Menu" />
       );
     }
@@ -492,10 +492,81 @@ function EmptyGrid() {
   );
 }
 
+// SVG icon paths for WC3-style command buttons
+function CommandIcon({ type, size = 24 }: { type: string; size?: number }) {
+  const s = size;
+  const h = s / 2;
+  const color = "#e8d8a0";
+
+  switch (type) {
+    case 'move':
+      // Green arrow pointing right
+      return (
+        <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>
+          <polygon points={`${s*0.15},${s*0.25} ${s*0.6},${s*0.25} ${s*0.6},${s*0.1} ${s*0.9},${h} ${s*0.6},${s*0.9} ${s*0.6},${s*0.75} ${s*0.15},${s*0.75}`}
+            fill="#40c040" stroke="#206020" strokeWidth="1.5" />
+        </svg>
+      );
+    case 'stop':
+      // Red/yellow stop hand
+      return (
+        <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>
+          <rect x={s*0.2} y={s*0.15} width={s*0.6} height={s*0.7} rx={s*0.08}
+            fill="#d0a020" stroke="#806010" strokeWidth="1.5" />
+          <line x1={s*0.35} y1={s*0.3} x2={s*0.35} y2={s*0.55} stroke="#806010" strokeWidth="2" strokeLinecap="round" />
+          <line x1={s*0.5} y1={s*0.25} x2={s*0.5} y2={s*0.55} stroke="#806010" strokeWidth="2" strokeLinecap="round" />
+          <line x1={s*0.65} y1={s*0.3} x2={s*0.65} y2={s*0.55} stroke="#806010" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+    case 'attack':
+      // Red crossed swords
+      return (
+        <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>
+          <line x1={s*0.15} y1={s*0.85} x2={s*0.85} y2={s*0.15} stroke="#e04040" strokeWidth="3" strokeLinecap="round" />
+          <line x1={s*0.85} y1={s*0.85} x2={s*0.15} y2={s*0.15} stroke="#c03030" strokeWidth="3" strokeLinecap="round" />
+          <polygon points={`${s*0.8},${s*0.05} ${s*0.95},${s*0.05} ${s*0.95},${s*0.2}`} fill="#e04040" />
+          <polygon points={`${s*0.05},${s*0.05} ${s*0.2},${s*0.05} ${s*0.05},${s*0.2}`} fill="#c03030" />
+        </svg>
+      );
+    case 'patrol':
+      // Blue circular arrows
+      return (
+        <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>
+          <path d={`M${s*0.7},${s*0.2} A${s*0.3},${s*0.3} 0 1,1 ${s*0.3},${s*0.2}`}
+            fill="none" stroke="#4090e0" strokeWidth="2.5" strokeLinecap="round" />
+          <polygon points={`${s*0.25},${s*0.1} ${s*0.35},${s*0.22} ${s*0.2},${s*0.28}`} fill="#4090e0" />
+          <path d={`M${s*0.3},${s*0.8} A${s*0.3},${s*0.3} 0 1,1 ${s*0.7},${s*0.8}`}
+            fill="none" stroke="#4090e0" strokeWidth="2.5" strokeLinecap="round" />
+          <polygon points={`${s*0.75},${s*0.9} ${s*0.65},${s*0.78} ${s*0.8},${s*0.72}`} fill="#4090e0" />
+        </svg>
+      );
+    case 'build':
+      // Orange hammer
+      return (
+        <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>
+          <rect x={s*0.43} y={s*0.35} width={s*0.14} height={s*0.55} rx={s*0.03}
+            fill="#8B6914" stroke="#5a4010" strokeWidth="1" />
+          <rect x={s*0.25} y={s*0.1} width={s*0.5} height={s*0.3} rx={s*0.06}
+            fill="#a0a0a0" stroke="#606060" strokeWidth="1.5" />
+        </svg>
+      );
+    case 'back':
+      // White left arrow
+      return (
+        <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>
+          <polygon points={`${s*0.85},${s*0.25} ${s*0.4},${s*0.25} ${s*0.4},${s*0.1} ${s*0.1},${h} ${s*0.4},${s*0.9} ${s*0.4},${s*0.75} ${s*0.85},${s*0.75}`}
+            fill="#c0c0c0" stroke="#808080" strokeWidth="1.5" />
+        </svg>
+      );
+    default:
+      return <span style={{ color, fontSize: s * 0.6, fontWeight: 'bold' }}>{type}</span>;
+  }
+}
+
 function ActionButton({
-  icon, label, hotkey, onClick, active, tooltip, cooldown,
+  iconType, icon, label, hotkey, onClick, active, tooltip, cooldown,
 }: {
-  icon: string; label: string; hotkey: string;
+  iconType?: string; icon?: string; label: string; hotkey: string;
   onClick: () => void; active: boolean; tooltip: string;
   cooldown?: number;
 }) {
@@ -505,7 +576,9 @@ function ActionButton({
       className={`wc3-cmd-btn ${active ? 'wc3-cmd-btn-active' : ''}`}
       title={tooltip}
     >
-      <div className="wc3-cmd-btn-icon">{icon}</div>
+      <div className="wc3-cmd-btn-icon">
+        {iconType ? <CommandIcon type={iconType} size={28} /> : (icon || label)}
+      </div>
       <div className="wc3-cmd-btn-cost">{hotkey || label}</div>
       {cooldown !== undefined && cooldown > 0 && (
         <div className="wc3-cmd-btn-cooldown">{cooldown}</div>

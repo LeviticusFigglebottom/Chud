@@ -2,7 +2,7 @@ import { GameEngine } from './GameEngine';
 import { Vector2, Entity, Unit, Building, Command, FactionId } from './types';
 import { getBuildingDefinition } from '../data/definitions';
 
-export type InputMode = 'normal' | 'building_placement' | 'ability_target' | 'attack_move' | 'patrol_target';
+export type InputMode = 'normal' | 'building_placement' | 'ability_target' | 'attack_move' | 'patrol_target' | 'move_target';
 
 interface DragState {
   active: boolean;
@@ -61,6 +61,11 @@ export class InputHandler {
 
       if (this.mode === 'patrol_target') {
         this.patrolAtMouse(e);
+        return;
+      }
+
+      if (this.mode === 'move_target') {
+        this.moveAtMouse(e);
         return;
       }
 
@@ -182,12 +187,8 @@ export class InputHandler {
         break;
       case 'a':
       case 'A':
-        // Only attack-move when not used for camera (handled: A/a is in keysDown for camera)
-        // Attack-move activates on keydown, camera uses keysDown in updateCamera
-        // We'll let both coexist - A press triggers attack mode, holding A scrolls camera
-        if (!this.keysDown.has('a') && !this.keysDown.has('A')) {
-          this.startAttackMove();
-        }
+        // Attack-move: only if units are selected (camera WASD still works via updateCamera)
+        this.startAttackMove();
         break;
       case 'p':
       case 'P':
@@ -328,10 +329,29 @@ export class InputHandler {
     this.cancelMode();
   }
 
-  // Move mode
+  // Move mode - left click to move
   startMoveMode(): void {
-    this.mode = 'normal'; // move is just right-click, so we stay in normal
-    this.onModeChange?.('normal');
+    const selected = this.getSelectedEntities();
+    if (selected.some(e => e.type === 'unit')) {
+      this.mode = 'move_target';
+      this.onModeChange?.('move_target');
+    }
+  }
+
+  private moveAtMouse(e: MouseEvent): void {
+    const worldPos = this.engine.screenToWorld(e.offsetX, e.offsetY);
+    const selected = this.getSelectedEntities();
+    const unitIds = selected.filter(e => e.type === 'unit').map(e => e.id);
+
+    if (unitIds.length > 0) {
+      this.engine.issueCommand({
+        type: 'move',
+        entityIds: unitIds,
+        target: worldPos,
+        queued: this.keysDown.has('Shift'),
+      });
+    }
+    this.cancelMode();
   }
 
   // Attack-move mode
@@ -444,11 +464,12 @@ export class InputHandler {
     const cam = this.engine.state.camera;
     const speed = this.edgeScrollSpeed / cam.zoom;
 
-    // Arrow key + WASD scrolling
-    if (this.keysDown.has('ArrowLeft') || this.keysDown.has('a') || this.keysDown.has('A')) cam.x -= speed;
-    if (this.keysDown.has('ArrowRight') || this.keysDown.has('d') || this.keysDown.has('D')) cam.x += speed;
-    if (this.keysDown.has('ArrowUp') || this.keysDown.has('w') || this.keysDown.has('W')) cam.y -= speed;
-    if (this.keysDown.has('ArrowDown') || this.keysDown.has('s') || this.keysDown.has('S')) cam.y += speed;
+    // Arrow keys always work; WASD only when in normal mode (no pending command)
+    const wasd = this.mode === 'normal';
+    if (this.keysDown.has('ArrowLeft') || (wasd && (this.keysDown.has('a') || this.keysDown.has('A')))) cam.x -= speed;
+    if (this.keysDown.has('ArrowRight') || (wasd && (this.keysDown.has('d') || this.keysDown.has('D')))) cam.x += speed;
+    if (this.keysDown.has('ArrowUp') || (wasd && (this.keysDown.has('w') || this.keysDown.has('W')))) cam.y -= speed;
+    if (this.keysDown.has('ArrowDown') || (wasd && (this.keysDown.has('s') || this.keysDown.has('S')))) cam.y += speed;
 
     // Clamp camera
     const maxX = this.engine.state.config.mapWidth * this.engine.state.config.tileSize - cam.width / cam.zoom;

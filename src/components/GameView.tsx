@@ -61,7 +61,9 @@ export default function GameView({ settings, onExit }: GameViewProps) {
     const canvas = canvasRef.current;
     const minimap = minimapRef.current;
 
-    const hudHeight = 190;
+    const topBarHeight = 28;
+    const bottomPanelHeight = 200;
+    const hudHeight = topBarHeight + bottomPanelHeight;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight - hudHeight;
     minimap.width = 176;
@@ -199,7 +201,7 @@ export default function GameView({ settings, onExit }: GameViewProps) {
 
     const handleResize = () => {
       canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight - hudHeight;
+      canvas.height = window.innerHeight - topBarHeight - bottomPanelHeight;
       engine.state.camera.width = canvas.width;
       engine.state.camera.height = canvas.height;
       renderer.resize(canvas.width, canvas.height);
@@ -219,7 +221,9 @@ export default function GameView({ settings, onExit }: GameViewProps) {
   }, [initGame]);
 
   return (
-    <div className="w-full h-full flex flex-col" style={{ background: "#0a0908" }}>
+    <div className="w-full h-full flex flex-col relative" style={{ background: "#0a0908" }}>
+      {/* Top bar is absolute, rendered by GameHUD */}
+      <div style={{ height: 28, flexShrink: 0 }} />
       <canvas ref={canvasRef} id="game-canvas" className="flex-1" style={{ display: "block" }} />
 
       <GameHUD

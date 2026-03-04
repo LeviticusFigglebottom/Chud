@@ -33,7 +33,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "camera",
     title: "Camera Controls",
-    description: "Move your view by moving the mouse to the edge of the screen, or use WASD / Arrow Keys. Scroll the mouse wheel to zoom in and out.",
+    description: "Move your view with WASD keys or by moving the mouse to the screen edges. Arrow keys also work. Scroll the mouse wheel to zoom in and out.",
     instruction: "Try moving the camera around, then press NEXT.",
     highlight: "map",
     autoComplete: 0,
@@ -130,7 +130,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "combat",
     title: "Combat",
-    description: "To attack enemies, select your military units and right-click on an enemy. Units will auto-attack nearby enemies. Press S to stop a unit. Use control groups (Ctrl+1-5 to assign, 1-5 to recall) to manage your army.",
+    description: "To attack enemies, select your military units and right-click on an enemy. Units will auto-attack nearby enemies. Press H to stop/hold a unit. Use control groups (Ctrl+1-5 to assign, 1-5 to recall) to manage your army.",
     instruction: "Press NEXT when ready.",
     autoComplete: 0,
   },
@@ -175,7 +175,7 @@ export default function Tutorial({ onExit }: TutorialProps) {
     const canvas = canvasRef.current;
     const minimap = minimapRef.current;
 
-    const hudHeight = 220; // extra for tutorial panel
+    const hudHeight = 228; // extra for tutorial panel
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight - hudHeight;
     minimap.width = 160;

@@ -160,18 +160,10 @@ export class InputHandler {
       case 'Escape':
         this.cancelMode();
         break;
-      case 's':
-      case 'S':
-        // Stop
+      case 'h':
+      case 'H':
+        // Stop/Hold position
         this.issueStopCommand();
-        break;
-      case 'a':
-      case 'A':
-        // Attack move (click to target)
-        break;
-      case 'p':
-      case 'P':
-        // Patrol
         break;
       case ' ':
         // Pause/unpause
@@ -361,11 +353,11 @@ export class InputHandler {
     if (this.mouseScreenPos.y < this.edgeScrollMargin) cam.y -= speed;
     if (this.mouseScreenPos.y > this.canvas.height - this.edgeScrollMargin) cam.y += speed;
 
-    // Arrow key scrolling
-    if (this.keysDown.has('ArrowLeft')) cam.x -= speed;
-    if (this.keysDown.has('ArrowRight')) cam.x += speed;
-    if (this.keysDown.has('ArrowUp')) cam.y -= speed;
-    if (this.keysDown.has('ArrowDown')) cam.y += speed;
+    // Arrow key + WASD scrolling
+    if (this.keysDown.has('ArrowLeft') || this.keysDown.has('a') || this.keysDown.has('A')) cam.x -= speed;
+    if (this.keysDown.has('ArrowRight') || this.keysDown.has('d') || this.keysDown.has('D')) cam.x += speed;
+    if (this.keysDown.has('ArrowUp') || this.keysDown.has('w') || this.keysDown.has('W')) cam.y -= speed;
+    if (this.keysDown.has('ArrowDown') || this.keysDown.has('s') || this.keysDown.has('S')) cam.y += speed;
 
     // Clamp camera
     const maxX = this.engine.state.config.mapWidth * this.engine.state.config.tileSize - cam.width / cam.zoom;

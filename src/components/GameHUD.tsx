@@ -21,6 +21,12 @@ interface GameHUDProps {
   onExit: () => void;
 }
 
+// =====================================================
+// WC3-STYLE GAME HUD
+// Top: resource bar
+// Bottom: minimap | info panel | command grid
+// =====================================================
+
 export default function GameHUD({
   minimapRef,
   resources,
@@ -43,281 +49,269 @@ export default function GameHUD({
     ? selectedEntities[0] as Building : null;
 
   return (
-    <div
-      className="flex"
-      style={{
-        height: 190,
-        background: "linear-gradient(180deg, #1a1710 0%, #0f0e0a 100%)",
-        borderTop: "2px solid #6b5a28",
-        boxShadow: "inset 0 1px 0 rgba(196,160,53,0.1), 0 -4px 12px rgba(0,0,0,0.5)",
-      }}
-    >
-      {/* === MINIMAP === */}
-      <div className="flex flex-col items-center p-2" style={{ borderRight: "1px solid #3a3220" }}>
-        <canvas
-          ref={minimapRef}
-          width={176}
-          height={176}
-          style={{
-            border: "2px solid #6b5a28",
-            borderRadius: 2,
-            boxShadow: "inset 0 0 10px rgba(0,0,0,0.5), 0 0 4px rgba(107,90,40,0.3)",
-          }}
-        />
-      </div>
-
-      {/* === SELECTION INFO === */}
-      <div className="flex-1 p-3 overflow-y-auto" style={{ minWidth: 220, borderRight: "1px solid #3a3220" }}>
-        {selectedEntities.length === 0 && (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-xs italic text-center" style={{ color: "#3a3220" }}>
-              Select units or buildings to view details.
-            </div>
-          </div>
-        )}
-
-        {selectedEntities.length > 1 && (
-          <div>
-            <div className="text-xs font-bold mb-2 tracking-wider uppercase" style={{ color: "#6b5a28" }}>
-              {selectedEntities.length} Units Selected
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {selectedEntities.slice(0, 24).map(e => {
-                const isUnit = e.type === "unit";
-                const unitDef = isUnit ? getUnitDefinition((e as Unit).unitType) : null;
-                return (
-                  <div
-                    key={e.id}
-                    className="flex items-center justify-center rounded"
-                    style={{
-                      width: 34, height: 34,
-                      background: "linear-gradient(180deg, #1e1b14, #12100a)",
-                      border: "1px solid #3a3220",
-                      fontSize: 15,
-                    }}
-                    title={unitDef?.name || "Unit"}
-                  >
-                    {unitDef?.icon || "?"}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {selectedUnit && <UnitInfo unit={selectedUnit} />}
-        {selectedBuilding && <BuildingInfo building={selectedBuilding} />}
-      </div>
-
-      {/* === COMMAND PANEL === */}
-      <div className="p-3" style={{ minWidth: 300, borderRight: "1px solid #3a3220" }}>
-        <CommandPanel
-          selectedEntities={selectedEntities}
-          faction={faction}
-          onTrainUnit={onTrainUnit}
-          onBuildBuilding={onBuildBuilding}
-        />
-      </div>
-
-      {/* === RESOURCES & STATUS === */}
-      <div className="p-3 flex flex-col justify-between" style={{ minWidth: 180 }}>
-        <div>
+    <>
+      {/* ============ TOP RESOURCE BAR ============ */}
+      <div className="wc3-top-bar">
+        <div className="wc3-top-bar-inner">
           {/* Resources */}
-          <ResourceRow icon="C" value={Math.floor(resources.copium)} label="Copium" color="#4da6ff" />
-          <ResourceRow icon="*" value={Math.floor(resources.clout)} label="Clout" color="#c4a035" />
-          <ResourceRow icon="T" value={Math.floor(resources.tendies)} label="Tendies" color="#cc6644" />
-
-          <div className="separator-gold my-2" />
+          <div className="wc3-res-group">
+            <div className="wc3-res-item">
+              <div className="wc3-res-icon wc3-res-copium" />
+              <span className="wc3-res-val" style={{ color: "#5cc0ff" }}>{Math.floor(resources.copium)}</span>
+            </div>
+            <div className="wc3-res-item">
+              <div className="wc3-res-icon wc3-res-clout" />
+              <span className="wc3-res-val" style={{ color: "#e8c840" }}>{Math.floor(resources.clout)}</span>
+            </div>
+            <div className="wc3-res-item">
+              <div className="wc3-res-icon wc3-res-tendies" />
+              <span className="wc3-res-val" style={{ color: "#e08040" }}>{Math.floor(resources.tendies)}</span>
+            </div>
+          </div>
 
           {/* Population */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: "#5a5030" }}>Pop:</span>
-            <span className="text-sm font-bold resource-display" style={{
-              color: population.current >= population.max ? "#8b2020" : "#8a7e60",
+          <div className="wc3-res-item">
+            <div className="wc3-res-icon wc3-res-pop" />
+            <span className="wc3-res-val" style={{
+              color: population.current >= population.max ? "#e04040" : "#a0a080",
             }}>
-              {population.current} / {population.max}
+              {population.current}/{population.max}
             </span>
           </div>
 
-          {/* Timer */}
-          <div className="text-xs mt-1 resource-display" style={{ color: "#3a3220" }}>
-            {minutes}:{seconds.toString().padStart(2, "0")}
-            {paused && <span style={{ color: "#c4a035" }}> [PAUSED]</span>}
+          {/* Timer & Controls */}
+          <div className="wc3-top-right">
+            <span className="wc3-timer">
+              {minutes}:{seconds.toString().padStart(2, "0")}
+              {paused && <span style={{ color: "#e8c840" }}> PAUSED</span>}
+            </span>
+            <button onClick={onTogglePause} className="wc3-top-btn">
+              {paused ? "||>" : "||"}
+            </button>
+            <button onClick={onExit} className="wc3-top-btn wc3-top-btn-quit">
+              X
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Menu buttons */}
-        <div className="flex flex-col gap-1">
-          <button onClick={onTogglePause} className="btn-wc3 text-xs py-1 px-2">
-            {paused ? "Resume" : "Pause"}
-          </button>
-          <button onClick={onExit} className="btn-wc3 btn-wc3-danger text-xs py-1 px-2">
-            Surrender
-          </button>
+      {/* ============ BOTTOM PANEL ============ */}
+      <div className="wc3-bottom-panel">
+        {/* Stone frame top edge */}
+        <div className="wc3-frame-top" />
+
+        <div className="wc3-bottom-inner">
+          {/* === MINIMAP SECTION === */}
+          <div className="wc3-minimap-frame">
+            <div className="wc3-minimap-border">
+              <canvas
+                ref={minimapRef}
+                width={176}
+                height={176}
+                className="wc3-minimap-canvas"
+              />
+            </div>
+          </div>
+
+          {/* === CENTER: INFO / PORTRAIT === */}
+          <div className="wc3-info-panel">
+            {selectedEntities.length === 0 && (
+              <div className="wc3-info-empty">
+                <div className="wc3-info-empty-text">No selection</div>
+                <div className="wc3-info-controls">
+                  <ControlRow keys="WASD" desc="Camera" />
+                  <ControlRow keys="LMB" desc="Select" />
+                  <ControlRow keys="RMB" desc="Command" />
+                  <ControlRow keys="H" desc="Stop" />
+                  <ControlRow keys="Space" desc="Pause" />
+                  <ControlRow keys="Ctrl+#" desc="Group" />
+                </div>
+              </div>
+            )}
+
+            {selectedEntities.length > 1 && (
+              <div className="wc3-multi-select">
+                <div className="wc3-multi-header">
+                  {selectedEntities.length} Units
+                </div>
+                <div className="wc3-multi-grid">
+                  {selectedEntities.slice(0, 24).map(e => {
+                    const isUnit = e.type === "unit";
+                    const unitDef = isUnit ? getUnitDefinition((e as Unit).unitType) : null;
+                    const u = e as Unit;
+                    const hpRatio = u.hp / u.maxHp;
+                    return (
+                      <div key={e.id} className="wc3-multi-icon" title={unitDef?.name || "Unit"}>
+                        <span className="wc3-multi-icon-text">{unitDef?.icon || "?"}</span>
+                        <div className="wc3-multi-hp">
+                          <div className="wc3-multi-hp-fill" style={{
+                            width: `${hpRatio * 100}%`,
+                            background: hpRatio > 0.5 ? "#4a8030" : hpRatio > 0.25 ? "#a08020" : "#a02020",
+                          }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {selectedUnit && <UnitInfoWC3 unit={selectedUnit} />}
+            {selectedBuilding && <BuildingInfoWC3 building={selectedBuilding} />}
+          </div>
+
+          {/* === COMMAND PANEL (right) === */}
+          <div className="wc3-cmd-panel">
+            <CommandPanelWC3
+              selectedEntities={selectedEntities}
+              faction={faction}
+              onTrainUnit={onTrainUnit}
+              onBuildBuilding={onBuildBuilding}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
-// ===== Subcomponents =====
-
-function ResourceRow({ icon, value, label, color }: { icon: string; value: number; label: string; color: string }) {
-  return (
-    <div className="flex items-center gap-2 mb-1">
-      <span style={{ fontSize: 14 }}>{icon}</span>
-      <span className="text-sm font-bold resource-display" style={{ color, minWidth: 40 }}>
-        {value}
-      </span>
-      <span className="text-xs" style={{ color: "#3a3220" }}>{label}</span>
-    </div>
-  );
-}
-
-function UnitInfo({ unit }: { unit: Unit }) {
+// =====================================================
+// WC3 UNIT INFO
+// =====================================================
+function UnitInfoWC3({ unit }: { unit: Unit }) {
   const def = getUnitDefinition(unit.unitType);
   if (!def) return null;
 
   const hpRatio = unit.hp / unit.maxHp;
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-2">
-        <div className="text-xl flex items-center justify-center rounded"
-          style={{ width: 36, height: 36, background: "#12100a", border: "1px solid #3a3220" }}>
-          {def.icon}
+    <div className="wc3-unit-info">
+      {/* Portrait area */}
+      <div className="wc3-portrait-row">
+        <div className="wc3-portrait">
+          <span className="wc3-portrait-icon">{def.icon}</span>
+          {unit.isHero && <div className="wc3-portrait-hero-badge">Lv{unit.level}</div>}
         </div>
-        <div>
-          <div className="text-sm font-bold" style={{ color: "#d4c8a0" }}>
+        <div className="wc3-portrait-name-area">
+          <div className="wc3-unit-name">
             {def.name}
-            {unit.isHero && <span style={{ color: "#c4a035" }}> [H] Lv{unit.level}</span>}
+            {unit.isHero && <span className="wc3-hero-tag">[HERO]</span>}
           </div>
-          <div className="text-xs uppercase tracking-wide" style={{ color: "#5a5030" }}>{unit.state}</div>
+          <div className="wc3-unit-state">{unit.state}</div>
         </div>
       </div>
 
       {/* HP Bar */}
-      <div className="mb-2">
-        <div className="w-full h-2 rounded" style={{ background: "#1a1710", border: "1px solid #3a3220" }}>
-          <div className="h-full rounded" style={{
+      <div className="wc3-hp-bar-container">
+        <div className="wc3-hp-bar-bg">
+          <div className="wc3-hp-bar-fill" style={{
             width: `${hpRatio * 100}%`,
-            background: hpRatio > 0.6 ? "#4a7a30" : hpRatio > 0.3 ? "#8b7320" : "#8b2020",
-            transition: "width 0.2s",
+            background: hpRatio > 0.6 ? "linear-gradient(180deg, #5a9a40, #3a7a20)"
+              : hpRatio > 0.3 ? "linear-gradient(180deg, #c0a020, #908010)"
+              : "linear-gradient(180deg, #c03030, #902020)",
           }} />
         </div>
-        <div className="text-xs mt-1" style={{ color: "#5a5030" }}>
-          {Math.floor(unit.hp)} / {unit.maxHp}
-        </div>
+        <span className="wc3-hp-text">{Math.floor(unit.hp)}/{unit.maxHp}</span>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-3 gap-x-3 gap-y-1 text-xs">
-        <StatItem label="DMG" value={String(unit.damage)} color="#cc8844" />
-        <StatItem label="ARM" value={String(unit.armor)} color="#6688aa" />
-        <StatItem label="SPD" value={String(unit.speed)} color="#88aa66" />
-        <StatItem label="RNG" value={String(unit.attackRange)} color="#aa6666" />
-        <StatItem label="AS" value={`${unit.attackSpeed.toFixed(1)}/s`} color="#8866aa" />
+      {/* Stats */}
+      <div className="wc3-stats-grid">
+        <StatBox label="ATK" value={`${unit.damage}`} color="#cc8844" />
+        <StatBox label="ARM" value={`${unit.armor}`} color="#6688aa" />
+        <StatBox label="SPD" value={`${unit.speed}`} color="#88aa66" />
+        <StatBox label="RNG" value={`${unit.attackRange}`} color="#aa6666" />
       </div>
 
       {/* Abilities */}
       {unit.abilities.length > 0 && (
-        <div className="mt-2">
-          <div className="text-xs font-bold tracking-wider uppercase mb-1" style={{ color: "#6b5a28" }}>
-            Abilities
-          </div>
+        <div className="wc3-abilities">
           {unit.abilities.map(ability => (
-            <div key={ability.id} className="text-xs mb-1 flex items-center gap-1" style={{ color: "#8a7e60" }}>
-              <span>{ability.icon}</span>
-              <span>{ability.name}</span>
+            <div key={ability.id} className="wc3-ability-item" title={ability.name}>
+              <span className="wc3-ability-icon">{ability.icon}</span>
               {ability.currentCooldown > 0 && (
-                <span style={{ color: "#8b2020" }}>({Math.ceil(ability.currentCooldown)}s)</span>
+                <span className="wc3-ability-cd">{Math.ceil(ability.currentCooldown)}</span>
               )}
             </div>
           ))}
         </div>
       )}
-
-      <p className="text-xs mt-2 italic" style={{ color: "#3a3220" }}>{def.description}</p>
     </div>
   );
 }
 
-function BuildingInfo({ building }: { building: Building }) {
+// =====================================================
+// WC3 BUILDING INFO
+// =====================================================
+function BuildingInfoWC3({ building }: { building: Building }) {
   const def = getBuildingDefinition(building.buildingType);
   if (!def) return null;
 
   const hpRatio = building.hp / building.maxHp;
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-2">
-        <div className="text-xl flex items-center justify-center rounded"
-          style={{ width: 36, height: 36, background: "#12100a", border: "1px solid #3a3220" }}>
-          {def.icon}
+    <div className="wc3-unit-info">
+      {/* Portrait area */}
+      <div className="wc3-portrait-row">
+        <div className="wc3-portrait wc3-portrait-building">
+          <span className="wc3-portrait-icon">{def.icon}</span>
         </div>
-        <div>
-          <div className="text-sm font-bold" style={{ color: "#d4c8a0" }}>{def.name}</div>
-          <div className="text-xs uppercase tracking-wide" style={{ color: "#5a5030" }}>{building.state}</div>
+        <div className="wc3-portrait-name-area">
+          <div className="wc3-unit-name">{def.name}</div>
+          <div className="wc3-unit-state">{building.state}</div>
         </div>
       </div>
 
       {/* HP Bar */}
-      <div className="mb-2">
-        <div className="w-full h-2 rounded" style={{ background: "#1a1710", border: "1px solid #3a3220" }}>
-          <div className="h-full rounded" style={{
+      <div className="wc3-hp-bar-container">
+        <div className="wc3-hp-bar-bg">
+          <div className="wc3-hp-bar-fill" style={{
             width: `${hpRatio * 100}%`,
-            background: hpRatio > 0.6 ? "#4a7a30" : hpRatio > 0.3 ? "#8b7320" : "#8b2020",
+            background: hpRatio > 0.6 ? "linear-gradient(180deg, #5a9a40, #3a7a20)"
+              : hpRatio > 0.3 ? "linear-gradient(180deg, #c0a020, #908010)"
+              : "linear-gradient(180deg, #c03030, #902020)",
           }} />
         </div>
-        <div className="text-xs mt-1" style={{ color: "#5a5030" }}>
-          {Math.floor(building.hp)} / {building.maxHp}
-        </div>
+        <span className="wc3-hp-text">{Math.floor(building.hp)}/{building.maxHp}</span>
       </div>
 
       {/* Construction progress */}
       {building.state === "constructing" && (
-        <div className="mb-2">
-          <div className="text-xs mb-1" style={{ color: "#c4a035" }}>
-            Constructing... {Math.floor(building.buildProgress)}%
-          </div>
-          <div className="w-full h-2 rounded" style={{ background: "#1a1710", border: "1px solid #3a3220" }}>
-            <div className="h-full rounded" style={{ background: "#c4a035", width: `${building.buildProgress}%` }} />
+        <div className="wc3-progress-section">
+          <div className="wc3-progress-label">Building... {Math.floor(building.buildProgress)}%</div>
+          <div className="wc3-hp-bar-bg">
+            <div className="wc3-hp-bar-fill" style={{
+              width: `${building.buildProgress}%`,
+              background: "linear-gradient(180deg, #d0a020, #a08010)",
+            }} />
           </div>
         </div>
       )}
 
       {/* Training progress */}
       {building.trainQueue.length > 0 && (
-        <div className="mb-2">
-          <div className="text-xs mb-1" style={{ color: "#4da6ff" }}>
-            Training: {building.trainQueue[0].unitType.split("_").slice(1).join(" ")} ({Math.floor(building.trainQueue[0].progress)}%)
+        <div className="wc3-progress-section">
+          <div className="wc3-progress-label">
+            Training: {building.trainQueue[0].unitType.split("_").slice(1).join(" ")}
           </div>
-          <div className="w-full h-2 rounded" style={{ background: "#1a1710", border: "1px solid #3a3220" }}>
-            <div className="h-full rounded" style={{ background: "#4da6ff", width: `${building.trainQueue[0].progress}%` }} />
+          <div className="wc3-hp-bar-bg">
+            <div className="wc3-hp-bar-fill" style={{
+              width: `${building.trainQueue[0].progress}%`,
+              background: "linear-gradient(180deg, #4090d0, #2070b0)",
+            }} />
           </div>
           {building.trainQueue.length > 1 && (
-            <div className="text-xs mt-1" style={{ color: "#3a3220" }}>
-              +{building.trainQueue.length - 1} queued
-            </div>
+            <div className="wc3-queue-count">+{building.trainQueue.length - 1} queued</div>
           )}
         </div>
       )}
-
-      <p className="text-xs mt-1 italic" style={{ color: "#3a3220" }}>{def.description}</p>
     </div>
   );
 }
 
-function StatItem({ label, value, color }: { label: string; value: string; color: string }) {
-  return (
-    <div>
-      <span className="font-bold" style={{ color }}>{label}: </span>
-      <span style={{ color: "#8a7e60" }}>{value}</span>
-    </div>
-  );
-}
-
-function CommandPanel({
+// =====================================================
+// WC3 COMMAND PANEL (right side - grid of buttons)
+// =====================================================
+function CommandPanelWC3({
   selectedEntities,
   faction,
   onTrainUnit,
@@ -338,29 +332,29 @@ function CommandPanel({
   // Building selected - show train options
   if (selectedBuilding && selectedBuilding.state !== "constructing") {
     const def = getBuildingDefinition(selectedBuilding.buildingType);
-    if (!def || def.trains.length === 0) return <DefaultControls />;
+    if (!def || def.trains.length === 0) return <EmptyGrid />;
 
     return (
-      <div>
-        <div className="text-xs font-bold tracking-wider uppercase mb-2" style={{ color: "#6b5a28" }}>
-          Train Units
-        </div>
-        <div className="grid grid-cols-3 gap-2">
+      <div className="wc3-cmd-grid-wrapper">
+        <div className="wc3-cmd-grid">
           {def.trains.map(unitId => {
             const unitDef = getUnitDefinition(unitId);
             if (!unitDef) return null;
             return (
-              <CommandButton
+              <CmdButton
                 key={unitId}
                 icon={unitDef.icon}
                 name={unitDef.name}
-                cost={`${unitDef.cost.copium || 0}`}
-                costExtra={unitDef.cost.clout ? `${unitDef.cost.clout}` : undefined}
+                cost={unitDef.cost}
                 onClick={() => onTrainUnit(unitId)}
-                tooltip={unitDef.description}
+                tooltip={`${unitDef.name} - ${unitDef.description}`}
               />
             );
           })}
+          {/* Fill empty slots */}
+          {Array.from({ length: Math.max(0, 12 - def.trains.length) }).map((_, i) => (
+            <div key={`empty-${i}`} className="wc3-cmd-btn wc3-cmd-btn-empty" />
+          ))}
         </div>
       </div>
     );
@@ -370,87 +364,79 @@ function CommandPanel({
   if (hasWorkers) {
     const buildings = getFactionBuildings(faction);
     return (
-      <div>
-        <div className="text-xs font-bold tracking-wider uppercase mb-2" style={{ color: "#6b5a28" }}>
-          Construct Buildings
-        </div>
-        <div className="grid grid-cols-3 gap-2">
+      <div className="wc3-cmd-grid-wrapper">
+        <div className="wc3-cmd-grid">
           {buildings.map(bdef => (
-            <CommandButton
+            <CmdButton
               key={bdef.id}
               icon={bdef.icon}
               name={bdef.name}
-              cost={`${bdef.cost.copium || 0}`}
-              costExtra={bdef.cost.clout ? `${bdef.cost.clout}` : undefined}
+              cost={bdef.cost}
               onClick={() => onBuildBuilding(bdef.id)}
-              tooltip={bdef.description}
+              tooltip={`${bdef.name} - ${bdef.description}`}
             />
+          ))}
+          {Array.from({ length: Math.max(0, 12 - buildings.length) }).map((_, i) => (
+            <div key={`empty-${i}`} className="wc3-cmd-btn wc3-cmd-btn-empty" />
           ))}
         </div>
       </div>
     );
   }
 
-  return <DefaultControls />;
+  return <EmptyGrid />;
 }
 
-function CommandButton({
-  icon, name, cost, costExtra, onClick, tooltip,
+function EmptyGrid() {
+  return (
+    <div className="wc3-cmd-grid-wrapper">
+      <div className="wc3-cmd-grid">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i} className="wc3-cmd-btn wc3-cmd-btn-empty" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CmdButton({
+  icon, name, cost, onClick, tooltip,
 }: {
-  icon: string; name: string; cost: string; costExtra?: string;
+  icon: string; name: string; cost: { copium?: number; clout?: number; tendies?: number };
   onClick: () => void; tooltip: string;
 }) {
+  const costStr = [
+    cost.copium ? `${cost.copium}C` : '',
+    cost.clout ? `${cost.clout}L` : '',
+    cost.tendies ? `${cost.tendies}T` : '',
+  ].filter(Boolean).join(' ');
+
   return (
     <button
       onClick={onClick}
-      className="p-2 rounded text-center"
-      style={{
-        background: "linear-gradient(180deg, #1e1b14, #12100a)",
-        border: "1px solid #3a3220",
-        transition: "all 0.15s ease",
-        cursor: "pointer",
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#6b5a28"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#3a3220"; }}
+      className="wc3-cmd-btn"
       title={tooltip}
     >
-      <div style={{ fontSize: 18 }}>{icon}</div>
-      <div className="text-xs truncate mt-1" style={{ color: "#8a7e60" }}>{name}</div>
-      <div className="text-xs" style={{ color: "#4da6ff" }}>
-        {cost}c
-        {costExtra && <span style={{ color: "#c4a035" }}> {costExtra}*</span>}
-      </div>
+      <div className="wc3-cmd-btn-icon">{icon}</div>
+      <div className="wc3-cmd-btn-cost">{costStr}</div>
     </button>
   );
 }
 
-function DefaultControls() {
+function StatBox({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div>
-      <div className="text-xs font-bold tracking-wider uppercase mb-2" style={{ color: "#6b5a28" }}>
-        Commands
-      </div>
-      <div className="text-xs leading-loose" style={{ color: "#5a5030" }}>
-        <ControlRow keys="LMB" desc="Select" />
-        <ControlRow keys="Drag" desc="Box Select" />
-        <ControlRow keys="RMB" desc="Move / Attack / Gather" />
-        <ControlRow keys="Shift" desc="Add to Selection" />
-        <ControlRow keys="S" desc="Stop" />
-        <ControlRow keys="Space" desc="Pause / Resume" />
-        <ControlRow keys="Ctrl+#" desc="Save Group" />
-        <ControlRow keys="1-5" desc="Recall Group" />
-        <ControlRow keys="Scroll" desc="Zoom" />
-        <ControlRow keys="Esc" desc="Cancel" />
-      </div>
+    <div className="wc3-stat-box">
+      <span className="wc3-stat-label">{label}</span>
+      <span className="wc3-stat-value" style={{ color }}>{value}</span>
     </div>
   );
 }
 
 function ControlRow({ keys, desc }: { keys: string; desc: string }) {
   return (
-    <div className="flex gap-2">
-      <span className="font-bold" style={{ color: "#6b5a28", minWidth: 50 }}>{keys}</span>
-      <span>{desc}</span>
+    <div className="wc3-control-row">
+      <span className="wc3-control-key">{keys}</span>
+      <span className="wc3-control-desc">{desc}</span>
     </div>
   );
 }

@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg: #0a0a1a;
+  --color-panel: #1a1a2e;
+  --color-panel-border: #2a2a4e;
+  --color-text: #e0e0e0;
+  --color-accent: #00bfff;
+  --color-gold: #ffd700;
+  --color-danger: #ff4444;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Game canvas */
+#game-canvas {
+  cursor: default;
+  display: block;
+}
+
+#game-canvas.building-mode {
+  cursor: crosshair;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-panel);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-panel-border);
+  border-radius: 3px;
+}

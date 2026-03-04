@@ -1,11 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Component, ReactNode } from "react";
 import MainMenu from "@/components/MainMenu";
 import GameView from "@/components/GameView";
 import CampaignSelect from "@/components/CampaignSelect";
 import { FactionId, DifficultyLevel } from "@/game/engine/types";
 import { FACTION_INFO } from "@/game/data/definitions";
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ background: "#1a0000", color: "#ff4444", padding: 40, fontFamily: "monospace", whiteSpace: "pre-wrap" }}>
+          <h1 style={{ color: "#ff6666" }}>Runtime Error</h1>
+          <p><strong>{this.state.error.message}</strong></p>
+          <pre style={{ color: "#cc8888", fontSize: 12, maxHeight: 400, overflow: "auto" }}>{this.state.error.stack}</pre>
+          <button onClick={() => this.setState({ error: null })} style={{ marginTop: 20, padding: "8px 16px", background: "#333", color: "#fff", border: "1px solid #666", cursor: "pointer" }}>
+            Try Again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 type Screen = "menu" | "campaign" | "skirmish" | "game";
 
@@ -42,6 +67,7 @@ export default function Home() {
   };
 
   return (
+    <ErrorBoundary>
     <main className="w-screen h-screen overflow-hidden">
       {screen === "menu" && (
         <MainMenu
@@ -68,6 +94,7 @@ export default function Home() {
         />
       )}
     </main>
+    </ErrorBoundary>
   );
 }
 

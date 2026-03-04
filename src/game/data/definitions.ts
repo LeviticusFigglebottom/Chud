@@ -187,7 +187,7 @@ const chosenUnits: UnitDefinition[] = [
   {
     id: 'chosen_merchant',
     name: 'Merchant',
-    description: 'Worker unit. Gathers 20% more resources than other factions\' workers.',
+    description: "Worker unit. Gathers 20% more resources than other factions workers.",
     faction: 'chosen',
     hp: 180,
     armor: 0,
@@ -383,7 +383,7 @@ const crusaderUnits: UnitDefinition[] = [
   {
     id: 'crusader_paladin',
     name: 'Paladin of Purity',
-    description: 'Heavy melee. Charges into battle to defend m\'lady\'s honor.',
+    description: "Heavy melee. Charges into battle to defend m-lady honor.",
     faction: 'crusaders',
     hp: 600,
     armor: 4,
@@ -447,7 +447,7 @@ const crusaderUnits: UnitDefinition[] = [
   {
     id: 'crusader_mega_simp',
     name: 'Mega Simp',
-    description: 'Elite tank. Has donated so much he\'s evolved into a being of pure devotion.',
+    description: "Elite tank. Has donated so much he has evolved into a being of pure devotion.",
     faction: 'crusaders',
     hp: 1000,
     armor: 6,
@@ -704,7 +704,7 @@ const chadUnits: UnitDefinition[] = [
 const chudBuildings: BuildingDefinition[] = [
   {
     id: 'chud_main',
-    name: "Mom's House",
+    name: "Moms House",
     description: 'Main base. Where it all began. The basement is surprisingly spacious.',
     faction: 'chuds',
     hp: 2000,
@@ -764,7 +764,7 @@ const chudBuildings: BuildingDefinition[] = [
   },
   {
     id: 'chud_moms_basement',
-    name: "Mom's Basement",
+    name: "Moms Basement",
     description: 'The innermost sanctum. Trains Reddit Mods and the Pepe Lord.',
     faction: 'chuds',
     hp: 1200,
@@ -1350,33 +1350,33 @@ export function getAllFactionData(faction: FactionId) {
 // Faction display info
 export const FACTION_INFO: Record<FactionId, { name: string; color: string; description: string; motto: string }> = {
   chuds: {
-    name: 'The Chuds',
-    color: '#8B4513',
-    description: 'Basement-dwelling keyboard warriors who have transcended the need for sunlight. Their power grows in the darkness of their monitor glow.',
-    motto: '"Actually, it\'s about ethics in gaming journalism."',
+    name: "The Chuds",
+    color: "#8B4513",
+    description: "Basement-dwelling keyboard warriors who have transcended the need for sunlight. Their power grows in the darkness of their monitor glow.",
+    motto: "Actually, it is about ethics in gaming journalism.",
   },
   chosen: {
-    name: 'The Chosen',
-    color: '#FFD700',
-    description: 'Masters of economics and media manipulation. They don\'t fight wars -- they fund both sides and collect the interest.',
-    motto: '"It\'s not a conspiracy if it\'s just good business."',
+    name: "The Chosen",
+    color: "#FFD700",
+    description: "Masters of economics and media manipulation. They do not fight wars -- they fund both sides and collect the interest.",
+    motto: "It is not a conspiracy if it is just good business.",
   },
   crusaders: {
-    name: 'The White Knight Crusaders',
-    color: '#FF69B4',
-    description: 'Chivalrous defenders of honor they were never asked to defend. They tip their fedoras and charge into battle for m\'lady.',
-    motto: '"I\'m not like other factions, I actually respect you."',
+    name: "The White Knight Crusaders",
+    color: "#FF69B4",
+    description: "Chivalrous defenders of honor they were never asked to defend. They tip their fedoras and charge into battle for m-lady.",
+    motto: "I am not like other factions, I actually respect you.",
   },
   chads: {
-    name: 'The Chads',
-    color: '#FF4500',
-    description: 'Pure testosterone given form. They don\'t need strategy -- their jawlines cut through enemy defenses. Every day is arm day.',
-    motto: '"We\'re all gonna make it, brah."',
+    name: "The Chads",
+    color: "#FF4500",
+    description: "Pure testosterone given form. They do not need strategy -- their jawlines cut through enemy defenses. Every day is arm day.",
+    motto: "We are all gonna make it, brah.",
   },
   neutral: {
-    name: 'Neutral',
-    color: '#888888',
-    description: 'The normies. They just wanted to grill.',
-    motto: '"Can we please just talk about something else?"',
+    name: "Neutral",
+    color: "#888888",
+    description: "The normies. They just wanted to grill.",
+    motto: "Can we please just talk about something else?",
   },
 };

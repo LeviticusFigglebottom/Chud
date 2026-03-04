@@ -127,7 +127,7 @@ export default function MainMenu({ onSkirmish, onCampaign }: MainMenuProps) {
 
       {/* Version */}
       <div className="absolute bottom-4 text-xs relative z-10" style={{ color: "#2a2518" }}>
-        v0.1.0 &mdash; &quot;The Basement Patch&quot;
+        v0.1.0 -- &quot;The Basement Patch&quot;
       </div>
 
       {/* Bottom border */}

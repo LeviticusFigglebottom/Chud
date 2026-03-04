@@ -82,7 +82,7 @@ export default function CampaignSelect({ onBack, onStartMission }: CampaignSelec
                       {campaign.name}
                     </h2>
                     <span className="text-xs" style={{ color: "#5a5030" }}>
-                      {info.name} &mdash; {campaign.missions.length} Missions
+                      {info.name} -- {campaign.missions.length} Missions
                     </span>
                   </div>
                 </div>
@@ -183,7 +183,7 @@ export default function CampaignSelect({ onBack, onStartMission }: CampaignSelec
             {mission.objectives.map(obj => (
               <li key={obj.id} className="text-xs mb-1 flex items-start gap-2" style={{ color: "#d4c8a0" }}>
                 <span style={{ color: obj.required ? "#c4a035" : "#5a5030" }}>
-                  {obj.required ? "\u2605" : "\u25CB"}
+                  {obj.required ? "*" : "o"}
                 </span>
                 {obj.description}
               </li>

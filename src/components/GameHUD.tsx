@@ -190,7 +190,7 @@ function UnitInfo({ unit }: { unit: Unit }) {
         <div>
           <div className="text-sm font-bold" style={{ color: "#d4c8a0" }}>
             {def.name}
-            {unit.isHero && <span style={{ color: "#c4a035" }}> \u2605 Lv{unit.level}</span>}
+            {unit.isHero && <span style={{ color: "#c4a035" }}> [H] Lv{unit.level}</span>}
           </div>
           <div className="text-xs uppercase tracking-wide" style={{ color: "#5a5030" }}>{unit.state}</div>
         </div>

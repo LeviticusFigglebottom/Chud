@@ -12,7 +12,7 @@ import { CampaignMission, FactionId } from '../engine/types';
 // The story follows the conflict through each faction's
 // perspective, revealing that the true enemy was
 // chronically-online behavior all along.
-// (But that won't stop anyone.)
+// (But that will not stop anyone.)
 
 export interface CampaignChapter {
   id: string;
@@ -30,17 +30,17 @@ export const CAMPAIGNS: CampaignChapter[] = [
     id: 'chud_campaign',
     name: 'The Basement Awakens',
     faction: 'chuds',
-    description: 'The NEETs have been roused from their slumber by the normies\' intrusion into their sacred digital spaces. It\'s time to emerge from the basement and reclaim what is rightfully theirs: the entire internet.',
+    description: "The NEETs have been roused from their slumber by the normies intrusion into their sacred digital spaces. It is time to emerge from the basement and reclaim what is rightfully theirs: the entire internet.",
     missions: [
       {
         id: 'chud_m1',
         name: 'Tendies Must Flow',
-        description: 'Establish Mom\'s House and begin gathering resources.',
-        briefing: 'The tendies supply is running low, and Mom says you need to "get a real job." Instead, you\'ve decided to build an empire. Start by establishing your base and gathering enough Copium to survive. A rival faction of Chads has been spotted doing push-ups menacingly in the distance.',
+        description: "Establish Moms House and begin gathering resources.",
+        briefing: "The tendies supply is running low, and Mom says you need to 'get a real job.' Instead, you have decided to build an empire. Start by establishing your base and gathering enough Copium to survive. A rival faction of Chads has been spotted doing push-ups menacingly in the distance.",
         faction: 'chuds',
         mapId: 'discourse_arena',
         objectives: [
-          { id: 'obj1', description: 'Build Mom\'s House', type: 'build', target: 'chud_main', completed: false, required: true },
+          { id: 'obj1', description: "Build Moms House", type: 'build', target: 'chud_main', completed: false, required: true },
           { id: 'obj2', description: 'Train 4 NEETs', type: 'build', target: 'chud_neet', amount: 4, completed: false, required: true },
           { id: 'obj3', description: 'Gather 500 Copium', type: 'collect', target: 'copium', amount: 500, completed: false, required: true },
         ],
@@ -62,7 +62,7 @@ export const CAMPAIGNS: CampaignChapter[] = [
           {
             id: 'secret1',
             name: 'Rare Pepe #001',
-            hint: 'There\'s something hidden near the water\'s edge in the south...',
+            hint: "There is something hidden near the waters edge in the south...",
             location: { x: 40, y: 75 },
             discovered: false,
             reward: 'Unlocks the "Original Rare Pepe" cosmetic for the Pepe Lord hero.',
@@ -107,14 +107,14 @@ export const CAMPAIGNS: CampaignChapter[] = [
       {
         id: 'chud_m3',
         name: 'The Doompill Offensive',
-        description: 'Launch a full assault on the Chosen\'s Media Empire.',
-        briefing: 'The Chosen have been running a disinformation campaign claiming that your faction "doesn\'t touch grass." This cannot stand (even though it\'s technically true). Build Doomers, siege their Media Empire, and show them the true meaning of blackpilled. The Pepe Lord stirs in his ancient slumber...',
+        description: "Launch a full assault on the Chosen Media Empire.",
+        briefing: "The Chosen have been running a disinformation campaign claiming that your faction 'does not touch grass.' This cannot stand (even though it is technically true). Build Doomers, siege their Media Empire, and show them the true meaning of blackpilled. The Pepe Lord stirs in his ancient slumber...",
         faction: 'chuds',
         mapId: 'discourse_arena',
         objectives: [
           { id: 'obj1', description: 'Build a Doom Tower', type: 'build', target: 'chud_doom_tower', completed: false, required: true },
           { id: 'obj2', description: 'Summon the Pepe Lord', type: 'build', target: 'chud_pepe_lord', completed: false, required: true },
-          { id: 'obj3', description: 'Destroy the Chosen\'s Central Bank', type: 'destroy', target: 'chosen_main', completed: false, required: true },
+          { id: 'obj3', description: "Destroy the Chosen Central Bank", type: 'destroy', target: 'chosen_main', completed: false, required: true },
         ],
         sideQuests: [],
         secrets: [
@@ -177,7 +177,7 @@ export const CAMPAIGNS: CampaignChapter[] = [
         id: 'chosen_m2',
         name: 'Hostile Takeover',
         description: 'Use economic warfare to weaken the Chads before attacking.',
-        briefing: 'The Chads have been flexing dangerously close to our borders. Direct confrontation is inadvisable -- their biceps are enormous. Instead, we\'ll use a more sophisticated approach: sue them into poverty, then send in the lawyers to clean up.',
+        briefing: "The Chads have been flexing dangerously close to our borders. Direct confrontation is inadvisable -- their biceps are enormous. Instead, we will use a more sophisticated approach: sue them into poverty, then send in the lawyers to clean up.",
         faction: 'chosen',
         mapId: 'discourse_arena',
         objectives: [
@@ -195,7 +195,7 @@ export const CAMPAIGNS: CampaignChapter[] = [
         id: 'chosen_m3',
         name: 'Space Laser Online',
         description: 'Deploy the ultimate weapon against all remaining factions.',
-        briefing: 'The conspiracies were right all along (sort of). The Space Program is complete, and it\'s time to demonstrate the Orbital Strike to the remaining factions. But beware -- they\'ve formed a desperate alliance against you. Time to show them why you control the banks.',
+        briefing: "The conspiracies were right all along (sort of). The Space Program is complete, and it is time to demonstrate the Orbital Strike to the remaining factions. But beware -- they have formed a desperate alliance against you. Time to show them why you control the banks.",
         faction: 'chosen',
         mapId: 'discourse_arena',
         objectives: [
@@ -265,7 +265,7 @@ export const CAMPAIGNS: CampaignChapter[] = [
         id: 'crusader_m2',
         name: 'The Great Donation Drive',
         description: 'Fund the war effort through strategic simping.',
-        briefing: 'The war chest is empty because Sir Chaddington donated it all to an e-girl\'s birthday stream. Time to rebuild! Construct the Stream Temple, recruit E-Girl Healers, and launch the Great Donation Drive to fund the next offensive.',
+        briefing: "The war chest is empty because Sir Chaddington donated it all to an e-girls birthday stream. Time to rebuild! Construct the Stream Temple, recruit E-Girl Healers, and launch the Great Donation Drive to fund the next offensive.",
         faction: 'crusaders',
         mapId: 'discourse_arena',
         objectives: [
@@ -315,13 +315,13 @@ export const CAMPAIGNS: CampaignChapter[] = [
     id: 'chad_campaign',
     name: 'The Way of the Grind',
     faction: 'chads',
-    description: 'The Chads don\'t do politics. They don\'t do drama. They do reps. But when the other factions threaten their sacred gym, the Bros must unite under the GigaChad to defend the Iron Temple and spread the gospel of gains to all.',
+    description: "The Chads do not do politics. They do not do drama. They do reps. But when the other factions threaten their sacred gym, the Bros must unite under the GigaChad to defend the Iron Temple and spread the gospel of gains to all.",
     missions: [
       {
         id: 'chad_m1',
         name: 'Leg Day',
         description: 'Build the Iron Temple and begin the grind.',
-        briefing: 'Bro. The weights aren\'t going to lift themselves. Establish the Iron Temple, train some Gym Rats to gather protein (resources), and prepare for the most important day of all: leg day. The Chosen have been spreading rumors that you skip it. This aggression will not stand.',
+        briefing: "Bro. The weights are not going to lift themselves. Establish the Iron Temple, train some Gym Rats to gather protein (resources), and prepare for the most important day of all: leg day. The Chosen have been spreading rumors that you skip it. This aggression will not stand.",
         faction: 'chads',
         mapId: 'discourse_arena',
         objectives: [
@@ -353,7 +353,7 @@ export const CAMPAIGNS: CampaignChapter[] = [
         id: 'chad_m2',
         name: 'Bulk Season',
         description: 'Expand your territory and out-muscle the competition.',
-        briefing: 'It\'s bulk season, which means consuming everything in sight -- including enemy territory. The Crusaders have been white-knighting too close to your turf. Show them that chivalry is no match for 315lb bench press. Time to get SWOLE.',
+        briefing: "It is bulk season, which means consuming everything in sight -- including enemy territory. The Crusaders have been white-knighting too close to your turf. Show them that chivalry is no match for 315lb bench press. Time to get SWOLE.",
         faction: 'chads',
         mapId: 'discourse_arena',
         objectives: [
@@ -371,7 +371,7 @@ export const CAMPAIGNS: CampaignChapter[] = [
         id: 'chad_m3',
         name: 'Peak Performance',
         description: 'Achieve the ultimate form and crush all opposition.',
-        briefing: 'This is it, brah. The final rep. The GigaChad has been summoned from the depths of the Iron Temple, and with a jawline that could cut diamonds, he will lead the Bros to total victory. Remember: we\'re all gonna make it. But them? They\'re NOT gonna make it.',
+        briefing: "This is it, brah. The final rep. The GigaChad has been summoned from the depths of the Iron Temple, and with a jawline that could cut diamonds, he will lead the Bros to total victory. Remember: we are all gonna make it. But them? They are NOT gonna make it.",
         faction: 'chads',
         mapId: 'discourse_arena',
         objectives: [

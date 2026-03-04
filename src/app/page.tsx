@@ -40,6 +40,8 @@ interface GameSettings {
   enemyFaction: FactionId;
   difficulty: DifficultyLevel;
   missionId?: string;
+  mapSize?: 'small' | 'medium' | 'large';
+  mapType?: 'random' | 'discourse_arena' | 'river_crossing' | 'island_chains';
 }
 
 export default function Home() {
@@ -50,8 +52,8 @@ export default function Home() {
     difficulty: "heated",
   });
 
-  const startSkirmish = (faction: FactionId, enemy: FactionId, difficulty: DifficultyLevel) => {
-    setSettings({ faction, enemyFaction: enemy, difficulty });
+  const startSkirmish = (faction: FactionId, enemy: FactionId, difficulty: DifficultyLevel, mapSize?: 'small' | 'medium' | 'large', mapType?: string) => {
+    setSettings({ faction, enemyFaction: enemy, difficulty, mapSize: mapSize || 'medium', mapType: (mapType || 'random') as GameSettings['mapType'] });
     setScreen("game");
   };
 
@@ -137,16 +139,31 @@ const DIFF_COLORS: Record<string, string> = {
   touch_grass: "#9933cc",
 };
 
+const MAP_SIZES: { id: 'small' | 'medium' | 'large'; name: string; desc: string }[] = [
+  { id: 'small', name: 'Small', desc: '60x60 - Quick battles' },
+  { id: 'medium', name: 'Medium', desc: '80x80 - Standard size' },
+  { id: 'large', name: 'Large', desc: '120x120 - Epic warfare' },
+];
+
+const MAP_TYPES: { id: string; name: string; desc: string }[] = [
+  { id: 'random', name: 'Random', desc: 'Procedurally generated map' },
+  { id: 'discourse_arena', name: 'Discourse Arena', desc: 'Circular arena with center meme zone' },
+  { id: 'river_crossing', name: 'River Crossing', desc: 'River with bridge chokepoints' },
+  { id: 'island_chains', name: 'Island Chains', desc: 'Islands connected by land bridges' },
+];
+
 function SkirmishSetup({
   onBack,
   onStart,
 }: {
   onBack: () => void;
-  onStart: (faction: FactionId, enemy: FactionId, difficulty: DifficultyLevel) => void;
+  onStart: (faction: FactionId, enemy: FactionId, difficulty: DifficultyLevel, mapSize?: 'small' | 'medium' | 'large', mapType?: string) => void;
 }) {
   const [faction, setFaction] = useState<FactionId>("chuds");
   const [enemy, setEnemy] = useState<FactionId>("chads");
   const [difficulty, setDifficulty] = useState<DifficultyLevel>("heated");
+  const [mapSize, setMapSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [mapType, setMapType] = useState('random');
 
   return (
     <div
@@ -235,6 +252,65 @@ function SkirmishSetup({
         </div>
       </div>
 
+      {/* Map Settings Row */}
+      <div className="flex gap-6 mb-4">
+        {/* Map Type */}
+        <div>
+          <h2 className="text-xs tracking-wider uppercase text-center mb-2" style={{ color: "#6b5a28" }}>
+            Map
+          </h2>
+          <div className="flex flex-col gap-1">
+            {MAP_TYPES.map(m => {
+              const selected = mapType === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setMapType(m.id)}
+                  className="px-3 py-1.5 rounded text-left"
+                  style={{
+                    background: selected ? "linear-gradient(90deg, #2a3a1822, transparent)" : "linear-gradient(180deg, #1e1b14, #12100a)",
+                    border: selected ? "1px solid #6b8e6b" : "1px solid #2a2518",
+                    color: selected ? "#8abc6a" : "#5a5030",
+                    minWidth: 200,
+                  }}
+                >
+                  <span className="text-xs font-bold">{m.name}</span>
+                  <div className="text-xs mt-0.5" style={{ color: "#3a3220" }}>{m.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Map Size */}
+        <div>
+          <h2 className="text-xs tracking-wider uppercase text-center mb-2" style={{ color: "#6b5a28" }}>
+            Map Size
+          </h2>
+          <div className="flex flex-col gap-1">
+            {MAP_SIZES.map(s => {
+              const selected = mapSize === s.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setMapSize(s.id)}
+                  className="px-3 py-1.5 rounded text-left"
+                  style={{
+                    background: selected ? "linear-gradient(90deg, #2a3a1822, transparent)" : "linear-gradient(180deg, #1e1b14, #12100a)",
+                    border: selected ? "1px solid #6b8e6b" : "1px solid #2a2518",
+                    color: selected ? "#8abc6a" : "#5a5030",
+                    minWidth: 160,
+                  }}
+                >
+                  <span className="text-xs font-bold">{s.name}</span>
+                  <div className="text-xs mt-0.5" style={{ color: "#3a3220" }}>{s.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       {/* Difficulty */}
       <div className="mb-4">
         <h2 className="text-xs tracking-wider uppercase text-center mb-2" style={{ color: "#6b5a28" }}>
@@ -269,7 +345,7 @@ function SkirmishSetup({
         <button onClick={onBack} className="btn-wc3">
           Back
         </button>
-        <button onClick={() => onStart(faction, enemy, difficulty)} className="btn-wc3 btn-wc3-primary">
+        <button onClick={() => onStart(faction, enemy, difficulty, mapSize, mapType)} className="btn-wc3 btn-wc3-primary">
           Begin Battle
         </button>
       </div>

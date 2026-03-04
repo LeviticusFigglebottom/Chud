@@ -5,7 +5,7 @@ import { GameEngine } from "@/game/engine/GameEngine";
 import { Renderer } from "@/game/engine/Renderer";
 import { InputHandler } from "@/game/engine/InputHandler";
 import { GameConfig, Player, FactionId, DifficultyLevel, Entity, Resources } from "@/game/engine/types";
-import { generateDiscourseArena, getPlayerStartPositions } from "@/game/maps/MapGenerator";
+import { generateDiscourseArena, generateRiverCrossing, generateIslandChains, generateRandomMap, getPlayerStartPositions, getMapDimensions } from "@/game/maps/MapGenerator";
 import GameHUD from "./GameHUD";
 
 interface GameViewProps {
@@ -14,6 +14,8 @@ interface GameViewProps {
     enemyFaction: FactionId;
     difficulty: DifficultyLevel;
     missionId?: string;
+    mapSize?: 'small' | 'medium' | 'large';
+    mapType?: 'random' | 'discourse_arena' | 'river_crossing' | 'island_chains';
   };
   onExit: () => void;
 }
@@ -77,9 +79,10 @@ export default function GameView({ settings, onExit }: GameViewProps) {
     minimap.width = 176;
     minimap.height = 176;
 
+    const mapDims = getMapDimensions(settings.mapSize || 'medium');
     const config: GameConfig = {
-      mapWidth: 80,
-      mapHeight: 80,
+      mapWidth: mapDims.width,
+      mapHeight: mapDims.height,
       tileSize: 32,
       startingResources: { copium: 500, clout: 200, tendies: 0 },
       maxPopulation: 100,
@@ -87,7 +90,21 @@ export default function GameView({ settings, onExit }: GameViewProps) {
       difficulty: settings.difficulty,
     };
 
-    const map = generateDiscourseArena(config);
+    let map: ReturnType<typeof generateDiscourseArena>;
+    switch (settings.mapType) {
+      case 'discourse_arena':
+        map = generateDiscourseArena(config);
+        break;
+      case 'river_crossing':
+        map = generateRiverCrossing(config);
+        break;
+      case 'island_chains':
+        map = generateIslandChains(config);
+        break;
+      default:
+        map = generateRandomMap(config);
+        break;
+    }
     const startPositions = getPlayerStartPositions(config.mapWidth, config.mapHeight, config.tileSize);
 
     // Validate factions - fallback to safe defaults

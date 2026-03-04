@@ -226,10 +226,22 @@ export class InputHandler {
     }
 
     if (entities.length > 0) {
-      // Prefer own units
       const localPlayer = this.engine.state.players.find(p => p.id === this.engine.state.localPlayerId);
-      const ownEntity = entities.find(entity => localPlayer?.entities.includes(entity.id));
-      const target = ownEntity || entities[0];
+
+      // Filter to own entities
+      const ownEntities = entities.filter(entity => localPlayer?.entities.includes(entity.id));
+
+      // Prefer buildings if click is directly inside a building's bounds
+      const clickedBuilding = ownEntities.find(entity => {
+        if (entity.type !== 'building') return false;
+        return worldPos.x >= entity.position.x &&
+               worldPos.x <= entity.position.x + entity.size.x &&
+               worldPos.y >= entity.position.y &&
+               worldPos.y <= entity.position.y + entity.size.y;
+      });
+
+      // Prefer own units unless we directly clicked inside a building
+      const target = clickedBuilding || ownEntities.find(e => e.type === 'unit') || ownEntities[0] || entities[0];
 
       target.selected = true;
       if (!this.engine.state.selectedEntities.includes(target.id)) {

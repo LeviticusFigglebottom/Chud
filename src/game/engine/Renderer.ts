@@ -565,10 +565,15 @@ export class Renderer {
   // DECORATION RENDERING
   // =====================================================
   private drawDecoration(ctx: CanvasRenderingContext2D, type: string, px: number, py: number, ts: number, h: number): void {
-    if (type === 'tree') {
-      this.drawTree(ctx, px, py, ts, h);
-    } else if (type === 'bush') {
-      this.drawBush(ctx, px, py, ts, h);
+    switch (type) {
+      case 'tree': this.drawTree(ctx, px, py, ts, h); break;
+      case 'bush': this.drawBush(ctx, px, py, ts, h); break;
+      case 'flowers': this.drawFlowers(ctx, px, py, ts, h); break;
+      case 'rocks': this.drawRocks(ctx, px, py, ts, h); break;
+      case 'mushrooms': this.drawMushrooms(ctx, px, py, ts, h); break;
+      case 'bones': this.drawBones(ctx, px, py, ts, h); break;
+      case 'fallen_log': this.drawFallenLog(ctx, px, py, ts, h); break;
+      case 'reeds': this.drawReeds(ctx, px, py, ts, h); break;
     }
   }
 
@@ -645,6 +650,165 @@ export class Renderer {
     ctx.beginPath();
     ctx.arc(cx - 2, cy - 4, 3, 0, Math.PI * 2);
     ctx.fill();
+  }
+
+  private drawFlowers(ctx: CanvasRenderingContext2D, px: number, py: number, ts: number, h: number): void {
+    const colors = ['#e04080', '#e0e040', '#8040e0', '#40a0e0', '#e08040'];
+    for (let i = 0; i < 4; i++) {
+      const fx = px + (0.2 + h * 0.1 + i * 0.18) * ts;
+      const fy = py + (0.3 + (i % 2) * 0.4) * ts;
+      // Stem
+      ctx.strokeStyle = '#3a7020';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(fx, fy + 4);
+      ctx.lineTo(fx, fy);
+      ctx.stroke();
+      // Petals
+      ctx.fillStyle = colors[(i + Math.floor(h * 5)) % colors.length];
+      ctx.beginPath();
+      ctx.arc(fx, fy, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      // Center
+      ctx.fillStyle = '#e0e060';
+      ctx.beginPath();
+      ctx.arc(fx, fy, 1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  private drawRocks(ctx: CanvasRenderingContext2D, px: number, py: number, ts: number, h: number): void {
+    const cx = px + ts / 2;
+    const cy = py + ts / 2 + 2;
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 3, ts * 0.2, ts * 0.06, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Rocks
+    const rocks = [
+      { dx: -3, dy: 0, rx: 5, ry: 4, c: '#808080' },
+      { dx: 4, dy: 1, rx: 4, ry: 3, c: '#707070' },
+      { dx: 0, dy: -2, rx: 3.5, ry: 3, c: '#909090' },
+    ];
+    for (const r of rocks) {
+      ctx.fillStyle = r.c;
+      ctx.beginPath();
+      ctx.ellipse(cx + r.dx, cy + r.dy, r.rx, r.ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Highlight
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.beginPath();
+      ctx.arc(cx + r.dx - 1, cy + r.dy - 1, r.rx * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  private drawMushrooms(ctx: CanvasRenderingContext2D, px: number, py: number, ts: number, h: number): void {
+    const spots = [
+      { dx: ts * 0.3, dy: ts * 0.5 },
+      { dx: ts * 0.6, dy: ts * 0.4 },
+      { dx: ts * 0.45, dy: ts * 0.7 },
+    ];
+    for (const s of spots) {
+      const mx = px + s.dx;
+      const my = py + s.dy;
+      // Stem
+      ctx.fillStyle = '#d0c8a0';
+      ctx.fillRect(mx - 1, my - 2, 2, 4);
+      // Cap
+      ctx.fillStyle = h > 0.5 ? '#c03030' : '#a06030';
+      ctx.beginPath();
+      ctx.arc(mx, my - 3, 3.5, Math.PI, 0);
+      ctx.fill();
+      // Dots on cap
+      ctx.fillStyle = '#e0e0d0';
+      ctx.beginPath();
+      ctx.arc(mx - 1, my - 4, 0.8, 0, Math.PI * 2);
+      ctx.arc(mx + 1.5, my - 3.5, 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  private drawBones(ctx: CanvasRenderingContext2D, px: number, py: number, ts: number, h: number): void {
+    const cx = px + ts / 2;
+    const cy = py + ts / 2;
+    ctx.strokeStyle = '#c0b890';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    // Bone 1
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, cy - 2);
+    ctx.lineTo(cx + 6, cy + 2);
+    ctx.stroke();
+    // Bone ends
+    ctx.fillStyle = '#c0b890';
+    for (const [bx, by] of [[cx - 6, cy - 2], [cx + 6, cy + 2]]) {
+      ctx.beginPath();
+      ctx.arc(bx - 1, by - 1, 1.5, 0, Math.PI * 2);
+      ctx.arc(bx + 1, by + 1, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Bone 2 (crossing)
+    if (h > 0.3) {
+      ctx.beginPath();
+      ctx.moveTo(cx - 4, cy + 4);
+      ctx.lineTo(cx + 4, cy - 4);
+      ctx.stroke();
+    }
+  }
+
+  private drawFallenLog(ctx: CanvasRenderingContext2D, px: number, py: number, ts: number, h: number): void {
+    const cx = px + ts / 2;
+    const cy = py + ts / 2 + 2;
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 3, ts * 0.35, ts * 0.06, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Log body
+    ctx.fillStyle = '#5a4020';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, ts * 0.32, ts * 0.08, h * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Bark texture
+    ctx.strokeStyle = '#3a2810';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < 3; i++) {
+      const lx = cx - ts * 0.2 + i * ts * 0.15;
+      ctx.beginPath();
+      ctx.moveTo(lx, cy - 2);
+      ctx.lineTo(lx, cy + 2);
+      ctx.stroke();
+    }
+    // End ring
+    ctx.strokeStyle = '#6a5030';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(cx + ts * 0.3, cy, ts * 0.04, ts * 0.07, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  private drawReeds(ctx: CanvasRenderingContext2D, px: number, py: number, ts: number, h: number): void {
+    const sway = Math.sin(this.animTime * 1.5 + px * 0.1) * 2;
+    for (let i = 0; i < 5; i++) {
+      const rx = px + (0.2 + i * 0.15) * ts;
+      const ry = py + ts * 0.85;
+      const rh = 8 + h * 6 + i * 1.5;
+      ctx.strokeStyle = i % 2 === 0 ? '#6a7840' : '#5a6830';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.quadraticCurveTo(rx + sway, ry - rh * 0.6, rx + sway * 1.2, ry - rh);
+      ctx.stroke();
+      // Cattail tip on some
+      if (i % 2 === 0) {
+        ctx.fillStyle = '#5a3820';
+        ctx.beginPath();
+        ctx.ellipse(rx + sway * 1.2, ry - rh - 2, 1.5, 3.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
   }
 
   // =====================================================

@@ -4,9 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { GameEngine } from "@/game/engine/GameEngine";
 import { Renderer } from "@/game/engine/Renderer";
 import { InputHandler } from "@/game/engine/InputHandler";
-import { GameConfig, Player, FactionId, DifficultyLevel, Entity, Unit, Building, Resources } from "@/game/engine/types";
+import { GameConfig, Player, FactionId, DifficultyLevel, Entity, Resources } from "@/game/engine/types";
 import { generateDiscourseArena, getPlayerStartPositions } from "@/game/maps/MapGenerator";
-import { FACTION_INFO, getFactionBuildings, getFactionUnits, getBuildingDefinition, getUnitDefinition } from "@/game/data/definitions";
 import GameHUD from "./GameHUD";
 
 interface GameViewProps {
@@ -19,11 +18,32 @@ interface GameViewProps {
   onExit: () => void;
 }
 
+const FACTION_COLORS: Record<string, string> = {
+  chuds: "#8B6914",
+  chosen: "#DAA520",
+  crusaders: "#FF69B4",
+  chads: "#FF4500",
+  neutral: "#888888",
+};
+
+const MAIN_BUILDINGS: Record<string, string> = {
+  chuds: "chud_main",
+  chosen: "chosen_main",
+  crusaders: "crusader_main",
+  chads: "chad_main",
+};
+
+const WORKER_TYPES: Record<string, string> = {
+  chuds: "chud_neet",
+  chosen: "chosen_merchant",
+  crusaders: "crusader_simp",
+  chads: "chad_gym_rat",
+};
+
 export default function GameView({ settings, onExit }: GameViewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const minimapRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
-  const rendererRef = useRef<Renderer | null>(null);
   const inputRef = useRef<InputHandler | null>(null);
   const animFrameRef = useRef<number>(0);
 
@@ -33,7 +53,7 @@ export default function GameView({ settings, onExit }: GameViewProps) {
   const [gameTime, setGameTime] = useState(0);
   const [paused, setPaused] = useState(false);
   const [gameOver, setGameOver] = useState(false);
-  const [winner, setWinner] = useState<string>("");
+  const [winner, setWinner] = useState("");
 
   const initGame = useCallback(() => {
     if (!canvasRef.current || !minimapRef.current) return;
@@ -41,12 +61,11 @@ export default function GameView({ settings, onExit }: GameViewProps) {
     const canvas = canvasRef.current;
     const minimap = minimapRef.current;
 
-    // Set canvas size
-    const hudHeight = 200;
+    const hudHeight = 190;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight - hudHeight;
-    minimap.width = 200;
-    minimap.height = 200;
+    minimap.width = 176;
+    minimap.height = 176;
 
     const config: GameConfig = {
       mapWidth: 80,
@@ -58,24 +77,18 @@ export default function GameView({ settings, onExit }: GameViewProps) {
       difficulty: settings.difficulty,
     };
 
-    // Generate map
     const map = generateDiscourseArena(config);
     const startPositions = getPlayerStartPositions(config.mapWidth, config.mapHeight, config.tileSize);
 
-    // Player colors
-    const factionColors: Record<string, string> = {
-      chuds: "#8B6914",
-      chosen: "#DAA520",
-      crusaders: "#FF69B4",
-      chads: "#FF4500",
-    };
+    // Validate factions - fallback to safe defaults
+    const playerFaction = MAIN_BUILDINGS[settings.faction] ? settings.faction : "chuds";
+    const enemyFaction = MAIN_BUILDINGS[settings.enemyFaction] ? settings.enemyFaction : "chads";
 
-    // Create players
     const players: Player[] = [
       {
         id: "player1",
         name: "You",
-        faction: settings.faction,
+        faction: playerFaction,
         resources: { ...config.startingResources },
         population: 0,
         maxPopulation: 0,
@@ -83,13 +96,13 @@ export default function GameView({ settings, onExit }: GameViewProps) {
         upgrades: [],
         isAI: false,
         teamId: 1,
-        color: factionColors[settings.faction] || "#00bfff",
+        color: FACTION_COLORS[playerFaction] || "#00bfff",
         defeated: false,
       },
       {
         id: "player2",
         name: "Enemy",
-        faction: settings.enemyFaction,
+        faction: enemyFaction,
         resources: { ...config.startingResources },
         population: 0,
         maxPopulation: 0,
@@ -97,65 +110,45 @@ export default function GameView({ settings, onExit }: GameViewProps) {
         upgrades: [],
         isAI: true,
         teamId: 2,
-        color: factionColors[settings.enemyFaction] || "#ff4444",
+        color: FACTION_COLORS[enemyFaction] || "#ff4444",
         defeated: false,
       },
     ];
 
-    // Initialize engine
     const engine = new GameEngine(config, players, map);
     engineRef.current = engine;
 
-    // Spawn starting units for each player
-    const mainBuildings: Record<string, string> = {
-      chuds: "chud_main",
-      chosen: "chosen_main",
-      crusaders: "crusader_main",
-      chads: "chad_main",
-    };
-
-    const workerTypes: Record<string, string> = {
-      chuds: "chud_neet",
-      chosen: "chosen_merchant",
-      crusaders: "crusader_simp",
-      chads: "chad_gym_rat",
-    };
-
-    // Player 1 start
+    // Spawn starting bases and workers
     const p1Pos = startPositions[0];
-    engine.spawnBuilding(mainBuildings[settings.faction], settings.faction, p1Pos, "player1", true);
+    engine.spawnBuilding(MAIN_BUILDINGS[playerFaction], playerFaction, p1Pos, "player1", true);
     for (let i = 0; i < 5; i++) {
       engine.spawnUnit(
-        workerTypes[settings.faction],
-        settings.faction,
+        WORKER_TYPES[playerFaction],
+        playerFaction,
         { x: p1Pos.x + 110 + (i % 3) * 25, y: p1Pos.y + 40 + Math.floor(i / 3) * 25 },
         "player1"
       );
     }
 
-    // Player 2 (AI) start
     const p2Pos = startPositions[1];
-    engine.spawnBuilding(mainBuildings[settings.enemyFaction], settings.enemyFaction, p2Pos, "player2", true);
+    engine.spawnBuilding(MAIN_BUILDINGS[enemyFaction], enemyFaction, p2Pos, "player2", true);
     for (let i = 0; i < 5; i++) {
       engine.spawnUnit(
-        workerTypes[settings.enemyFaction],
-        settings.enemyFaction,
+        WORKER_TYPES[enemyFaction],
+        enemyFaction,
         { x: p2Pos.x + 110 + (i % 3) * 25, y: p2Pos.y + 40 + Math.floor(i / 3) * 25 },
         "player2"
       );
     }
 
-    // Set camera to player start
+    // Camera
     engine.state.camera.x = p1Pos.x - canvas.width / 2;
     engine.state.camera.y = p1Pos.y - canvas.height / 2;
     engine.state.camera.width = canvas.width;
     engine.state.camera.height = canvas.height;
     engine.state.camera.zoom = 1;
 
-    // Initialize renderer and input
     const renderer = new Renderer(canvas, minimap);
-    rendererRef.current = renderer;
-
     const input = new InputHandler(engine, canvas);
     inputRef.current = input;
 
@@ -169,18 +162,20 @@ export default function GameView({ settings, onExit }: GameViewProps) {
       input.updateCamera();
       renderer.render(engine.state);
 
-      // Draw selection box
+      // Selection box overlay
       const dragRect = input.getDragRect();
       if (dragRect) {
-        const ctx = canvas.getContext("2d")!;
-        ctx.strokeStyle = "#00FF00";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(dragRect.x, dragRect.y, dragRect.w, dragRect.h);
-        ctx.fillStyle = "rgba(0, 255, 0, 0.1)";
-        ctx.fillRect(dragRect.x, dragRect.y, dragRect.w, dragRect.h);
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.strokeStyle = "#c4a035";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(dragRect.x, dragRect.y, dragRect.w, dragRect.h);
+          ctx.fillStyle = "rgba(196, 160, 53, 0.08)";
+          ctx.fillRect(dragRect.x, dragRect.y, dragRect.w, dragRect.h);
+        }
       }
 
-      // Update UI state periodically
+      // Sync UI state
       if (engine.state.tick % 5 === 0) {
         const localPlayer = engine.state.players.find(p => p.id === engine.state.localPlayerId);
         if (localPlayer) {
@@ -192,8 +187,8 @@ export default function GameView({ settings, onExit }: GameViewProps) {
 
         if (engine.state.gameOver) {
           setGameOver(true);
-          const winPlayer = engine.state.players.find(p => p.id === engine.state.winner);
-          setWinner(winPlayer?.name || "Unknown");
+          const wp = engine.state.players.find(p => p.id === engine.state.winner);
+          setWinner(wp?.name || "Unknown");
         }
       }
 
@@ -202,7 +197,6 @@ export default function GameView({ settings, onExit }: GameViewProps) {
 
     animFrameRef.current = requestAnimationFrame(gameLoop);
 
-    // Handle resize
     const handleResize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight - hudHeight;
@@ -215,6 +209,7 @@ export default function GameView({ settings, onExit }: GameViewProps) {
     return () => {
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(animFrameRef.current);
+      input.destroy();
     };
   }, [settings]);
 
@@ -223,25 +218,10 @@ export default function GameView({ settings, onExit }: GameViewProps) {
     return cleanup;
   }, [initGame]);
 
-  const handleTrainUnit = (unitType: string) => {
-    inputRef.current?.trainUnit(unitType);
-  };
-
-  const handleBuildBuilding = (buildingType: string) => {
-    inputRef.current?.startBuildingPlacement(buildingType);
-  };
-
   return (
-    <div className="w-full h-full flex flex-col" style={{ background: "#0a0a1a" }}>
-      {/* Game canvas */}
-      <canvas
-        ref={canvasRef}
-        id="game-canvas"
-        className="flex-1"
-        style={{ display: "block" }}
-      />
+    <div className="w-full h-full flex flex-col" style={{ background: "#0a0908" }}>
+      <canvas ref={canvasRef} id="game-canvas" className="flex-1" style={{ display: "block" }} />
 
-      {/* Game HUD */}
       <GameHUD
         minimapRef={minimapRef}
         resources={resources}
@@ -250,8 +230,8 @@ export default function GameView({ settings, onExit }: GameViewProps) {
         paused={paused}
         selectedEntities={selectedEntities}
         faction={settings.faction}
-        onTrainUnit={handleTrainUnit}
-        onBuildBuilding={handleBuildBuilding}
+        onTrainUnit={(unitType) => inputRef.current?.trainUnit(unitType)}
+        onBuildBuilding={(buildingType) => inputRef.current?.startBuildingPlacement(buildingType)}
         onTogglePause={() => {
           if (engineRef.current) {
             engineRef.current.state.paused = !engineRef.current.state.paused;
@@ -260,43 +240,36 @@ export default function GameView({ settings, onExit }: GameViewProps) {
         onExit={onExit}
       />
 
-      {/* Game Over overlay */}
+      {/* Victory / Defeat overlay */}
       {gameOver && (
-        <div
-          className="absolute inset-0 flex flex-col items-center justify-center z-50"
-          style={{ background: "rgba(0,0,0,0.85)" }}
-        >
-          <h1
-            className="text-5xl font-bold mb-4"
-            style={{ color: winner === "You" ? "#00FF00" : "#FF4444" }}
-          >
-            {winner === "You" ? "VICTORY" : "DEFEAT"}
-          </h1>
-          <p className="text-lg mb-2" style={{ color: "#888" }}>
-            {winner === "You"
-              ? "You have achieved digital supremacy. Your enemies have been ratio'd into oblivion."
-              : "Your faction has been cancelled. Perhaps it's time to touch grass."}
-          </p>
-          <p className="text-sm mb-8" style={{ color: "#555" }}>
-            Game time: {Math.floor(gameTime / 60)}m {Math.floor(gameTime % 60)}s
-          </p>
-          <button
-            onClick={onExit}
-            className="px-8 py-3 rounded font-bold text-lg"
-            style={{ background: "#00bfff", color: "#000", border: "2px solid #00bfff" }}
-          >
-            Return to Menu
-          </button>
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-50"
+          style={{ background: "rgba(5,5,4,0.9)" }}>
+          <div className="text-center">
+            <h1 className="text-5xl font-bold mb-2"
+              style={{ color: winner === "You" ? "#c4a035" : "#8b2020" }}>
+              {winner === "You" ? "VICTORY" : "DEFEAT"}
+            </h1>
+            <div className="separator-gold mx-auto mb-4" style={{ width: 200 }} />
+            <p className="text-base mb-2" style={{ color: "#8a7e60" }}>
+              {winner === "You"
+                ? "Your enemies have been ratio'd into digital oblivion."
+                : "Your faction has been cancelled. Perhaps it is time to touch grass."}
+            </p>
+            <p className="text-xs mb-8" style={{ color: "#3a3220" }}>
+              Battle duration: {Math.floor(gameTime / 60)}m {Math.floor(gameTime % 60)}s
+            </p>
+            <button onClick={onExit} className="btn-wc3 btn-wc3-primary">
+              Return to Main Menu
+            </button>
+          </div>
         </div>
       )}
 
       {/* Pause overlay */}
       {paused && !gameOver && (
-        <div
-          className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none"
-          style={{ background: "rgba(0,0,0,0.4)" }}
-        >
-          <div className="text-4xl font-bold" style={{ color: "#ffd700" }}>
+        <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none"
+          style={{ background: "rgba(5,5,4,0.5)" }}>
+          <div className="text-4xl font-bold tracking-wider" style={{ color: "#c4a035" }}>
             PAUSED
           </div>
         </div>

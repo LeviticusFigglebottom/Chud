@@ -76,10 +76,10 @@ export default function Home() {
 // ============================================================
 
 const FACTION_ICONS: Record<string, string> = {
-  chuds: "\u{1F438}",
-  chosen: "\u{1F3A9}",
-  crusaders: "\u{2694}",
-  chads: "\u{1F5FF}",
+  chuds: "CH",
+  chosen: "TH",
+  crusaders: "CR",
+  chads: "GC",
 };
 
 const FACTIONS: { id: FactionId; name: string; desc: string; playstyle: string }[] = [
@@ -118,24 +118,28 @@ function SkirmishSetup({
 
   return (
     <div
-      className="flex flex-col items-center justify-center h-full"
-      style={{ background: "radial-gradient(ellipse at 50% 30%, #1a1508 0%, #0a0908 70%)" }}
+      className="flex flex-col items-center h-full overflow-y-auto"
+      style={{
+        background: "radial-gradient(ellipse at 50% 30%, #1a1508 0%, #0a0908 70%)",
+        paddingTop: 32,
+        paddingBottom: 32,
+      }}
     >
       <div className="absolute top-0 left-0 right-0 h-1" style={{ background: "linear-gradient(90deg, transparent 5%, #6b5a28 30%, #c4a035 50%, #6b5a28 70%, transparent 95%)" }} />
 
-      <div className="text-xs tracking-[0.3em] uppercase mb-2" style={{ color: "#6b5a28" }}>
+      <div className="text-xs tracking-[0.3em] uppercase mb-1" style={{ color: "#6b5a28" }}>
         Prepare for Battle
       </div>
-      <h1 className="text-3xl font-bold mb-1 shimmer-gold">Skirmish</h1>
-      <div className="separator-gold mb-6" style={{ width: 200 }} />
+      <h1 className="text-2xl font-bold mb-1" style={{ color: "#c4a035" }}>Skirmish</h1>
+      <div className="separator-gold mb-4" style={{ width: 180 }} />
 
-      <div className="flex gap-10 mb-6">
+      <div className="flex gap-8 mb-4">
         {/* Your Faction */}
         <div>
-          <h2 className="text-xs tracking-wider uppercase text-center mb-3" style={{ color: "#c4a035" }}>
+          <h2 className="text-xs tracking-wider uppercase text-center mb-2" style={{ color: "#c4a035" }}>
             Your Faction
           </h2>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {FACTIONS.map(f => {
               const info = FACTION_INFO[f.id];
               const selected = faction === f.id;
@@ -143,25 +147,21 @@ function SkirmishSetup({
                 <button
                   key={f.id}
                   onClick={() => { setFaction(f.id); if (enemy === f.id) setEnemy(FACTIONS.find(x => x.id !== f.id)?.id || "chads"); }}
-                  className="px-4 py-3 rounded text-left"
+                  className="px-3 py-2 rounded text-left"
                   style={{
                     background: selected
                       ? `linear-gradient(90deg, ${info.color}22, transparent)`
                       : "linear-gradient(180deg, #1e1b14, #12100a)",
-                    border: selected ? `2px solid ${info.color}` : "2px solid #2a2518",
+                    border: selected ? `1px solid ${info.color}` : "1px solid #2a2518",
                     color: "#d4c8a0",
-                    minWidth: 270,
-                    transition: "all 0.15s ease",
+                    minWidth: 240,
                   }}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{FACTION_ICONS[f.id]}</span>
-                    <span className="font-bold" style={{ color: selected ? info.color : "#d4c8a0" }}>{f.name}</span>
+                    <span className="text-xs font-bold" style={{ color: info.color, minWidth: 20 }}>{FACTION_ICONS[f.id]}</span>
+                    <span className="text-sm font-bold" style={{ color: selected ? info.color : "#d4c8a0" }}>{f.name}</span>
                   </div>
-                  <div className="flex justify-between mt-1">
-                    <span className="text-xs" style={{ color: "#5a5030" }}>{f.desc}</span>
-                  </div>
-                  <span className="text-xs italic" style={{ color: "#6b5a28" }}>{f.playstyle}</span>
+                  <div className="text-xs mt-0.5" style={{ color: "#5a5030" }}>{f.playstyle}</div>
                 </button>
               );
             })}
@@ -170,10 +170,10 @@ function SkirmishSetup({
 
         {/* Enemy Faction */}
         <div>
-          <h2 className="text-xs tracking-wider uppercase text-center mb-3" style={{ color: "#8b2020" }}>
+          <h2 className="text-xs tracking-wider uppercase text-center mb-2" style={{ color: "#8b2020" }}>
             Enemy Faction
           </h2>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {FACTIONS.filter(f => f.id !== faction).map(f => {
               const info = FACTION_INFO[f.id];
               const selected = enemy === f.id;
@@ -181,23 +181,21 @@ function SkirmishSetup({
                 <button
                   key={f.id}
                   onClick={() => setEnemy(f.id)}
-                  className="px-4 py-3 rounded text-left"
+                  className="px-3 py-2 rounded text-left"
                   style={{
                     background: selected
                       ? "linear-gradient(90deg, #3a181822, transparent)"
                       : "linear-gradient(180deg, #1e1b14, #12100a)",
-                    border: selected ? "2px solid #8b2020" : "2px solid #2a2518",
+                    border: selected ? "1px solid #8b2020" : "1px solid #2a2518",
                     color: "#d4c8a0",
-                    minWidth: 270,
-                    transition: "all 0.15s ease",
+                    minWidth: 240,
                   }}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{FACTION_ICONS[f.id]}</span>
-                    <span className="font-bold" style={{ color: selected ? "#cc4444" : "#d4c8a0" }}>{f.name}</span>
+                    <span className="text-xs font-bold" style={{ color: info.color, minWidth: 20 }}>{FACTION_ICONS[f.id]}</span>
+                    <span className="text-sm font-bold" style={{ color: selected ? "#cc4444" : "#d4c8a0" }}>{f.name}</span>
                   </div>
-                  <div className="text-xs mt-1" style={{ color: "#5a5030" }}>{f.desc}</div>
-                  <span className="text-xs italic" style={{ color: "#6b5a28" }}>{f.playstyle}</span>
+                  <div className="text-xs mt-0.5" style={{ color: "#5a5030" }}>{f.playstyle}</div>
                 </button>
               );
             })}
@@ -206,8 +204,8 @@ function SkirmishSetup({
       </div>
 
       {/* Difficulty */}
-      <div className="mb-6">
-        <h2 className="text-xs tracking-wider uppercase text-center mb-3" style={{ color: "#6b5a28" }}>
+      <div className="mb-4">
+        <h2 className="text-xs tracking-wider uppercase text-center mb-2" style={{ color: "#6b5a28" }}>
           Difficulty
         </h2>
         <div className="flex gap-2">
@@ -217,12 +215,11 @@ function SkirmishSetup({
               <button
                 key={d.id}
                 onClick={() => setDifficulty(d.id)}
-                className="px-4 py-2 rounded text-xs font-bold uppercase tracking-wide"
+                className="px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wide"
                 style={{
                   background: selected ? "#1e1b14" : "transparent",
-                  border: selected ? `2px solid ${DIFF_COLORS[d.id]}` : "2px solid #2a2518",
+                  border: selected ? `1px solid ${DIFF_COLORS[d.id]}` : "1px solid #2a2518",
                   color: selected ? DIFF_COLORS[d.id] : "#5a5030",
-                  transition: "all 0.15s ease",
                 }}
                 title={d.desc}
               >
@@ -231,7 +228,7 @@ function SkirmishSetup({
             );
           })}
         </div>
-        <p className="text-xs text-center mt-2 italic" style={{ color: "#3a3220" }}>
+        <p className="text-xs text-center mt-1 italic" style={{ color: "#3a3220" }}>
           {DIFFICULTIES.find(d => d.id === difficulty)?.desc}
         </p>
       </div>

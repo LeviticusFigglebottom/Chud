@@ -6,10 +6,10 @@ import { CAMPAIGNS, CampaignChapter } from "@/game/campaign/campaigns";
 import { FACTION_INFO } from "@/game/data/definitions";
 
 const FACTION_ICONS: Record<string, string> = {
-  chuds: "\u{1F438}",
-  chosen: "\u{1F3A9}",
-  crusaders: "\u{2694}",
-  chads: "\u{1F5FF}",
+  chuds: "CH",
+  chosen: "TH",
+  crusaders: "CR",
+  chads: "GC",
 };
 
 const DIFFICULTY_COLORS: Record<string, string> = {
@@ -41,7 +41,7 @@ export default function CampaignSelect({ onBack, onStartMission }: CampaignSelec
         <div className="text-xs tracking-[0.3em] uppercase mb-2" style={{ color: "#6b5a28" }}>
           Choose Your Path
         </div>
-        <h1 className="text-3xl font-bold mb-1 shimmer-gold">Campaign</h1>
+        <h1 className="text-3xl font-bold mb-1" style={{ color: "#c4a035" }}>Campaign</h1>
         <div className="separator-gold mb-6" style={{ width: 200 }} />
         <p className="text-sm mb-8" style={{ color: "#5a5030" }}>
           Each faction tells their side of The Great Online War.

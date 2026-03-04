@@ -123,9 +123,9 @@ export default function GameHUD({
       <div className="p-3 flex flex-col justify-between" style={{ minWidth: 180 }}>
         <div>
           {/* Resources */}
-          <ResourceRow icon={"\u{1F48E}"} value={Math.floor(resources.copium)} label="Copium" color="#4da6ff" />
-          <ResourceRow icon={"\u{2B50}"} value={Math.floor(resources.clout)} label="Clout" color="#c4a035" />
-          <ResourceRow icon={"\u{1F357}"} value={Math.floor(resources.tendies)} label="Tendies" color="#cc6644" />
+          <ResourceRow icon="C" value={Math.floor(resources.copium)} label="Copium" color="#4da6ff" />
+          <ResourceRow icon="*" value={Math.floor(resources.clout)} label="Clout" color="#c4a035" />
+          <ResourceRow icon="T" value={Math.floor(resources.tendies)} label="Tendies" color="#cc6644" />
 
           <div className="separator-gold my-2" />
 
@@ -417,8 +417,8 @@ function CommandButton({
       <div style={{ fontSize: 18 }}>{icon}</div>
       <div className="text-xs truncate mt-1" style={{ color: "#8a7e60" }}>{name}</div>
       <div className="text-xs" style={{ color: "#4da6ff" }}>
-        {cost}{"\u{1F48E}"}
-        {costExtra && <span style={{ color: "#c4a035" }}> {costExtra}{"\u{2B50}"}</span>}
+        {cost}c
+        {costExtra && <span style={{ color: "#c4a035" }}> {costExtra}*</span>}
       </div>
     </button>
   );

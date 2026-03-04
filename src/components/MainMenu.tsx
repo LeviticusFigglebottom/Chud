@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { FACTION_INFO } from "@/game/data/definitions";
 import { FactionId } from "@/game/engine/types";
 
@@ -10,64 +10,15 @@ interface MainMenuProps {
 }
 
 const FACTION_ICONS: Record<FactionId, string> = {
-  chuds: "\u{1F438}",    // frog
-  chosen: "\u{1F3A9}",   // top hat
-  crusaders: "\u{2694}",  // swords (single codepoint, no variation selector)
-  chads: "\u{1F5FF}",    // moai
-  neutral: "\u{1F465}",  // people
+  chuds: "CH",
+  chosen: "TH",
+  crusaders: "CR",
+  chads: "GC",
+  neutral: "--",
 };
 
 export default function MainMenu({ onSkirmish, onCampaign }: MainMenuProps) {
   const [hoveredFaction, setHoveredFaction] = useState<FactionId | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  // Animated background particles
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const particles: { x: number; y: number; vx: number; vy: number; size: number; alpha: number; color: string }[] = [];
-    for (let i = 0; i < 60; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: -Math.random() * 0.5 - 0.1,
-        size: Math.random() * 2 + 0.5,
-        alpha: Math.random() * 0.4 + 0.1,
-        color: ["#6b5a28", "#c4a035", "#8b7320", "#3a3220"][Math.floor(Math.random() * 4)],
-      });
-    }
-
-    let frame: number;
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (const p of particles) {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.y < -10) { p.y = canvas.height + 10; p.x = Math.random() * canvas.width; }
-        if (p.x < -10) p.x = canvas.width + 10;
-        if (p.x > canvas.width + 10) p.x = -10;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.alpha;
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      frame = requestAnimationFrame(animate);
-    };
-    frame = requestAnimationFrame(animate);
-
-    const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-    window.addEventListener("resize", handleResize);
-    return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", handleResize); };
-  }, []);
 
   const factionEntries: { id: FactionId; icon: string }[] = [
     { id: "chuds", icon: FACTION_ICONS.chuds },
@@ -81,8 +32,6 @@ export default function MainMenu({ onSkirmish, onCampaign }: MainMenuProps) {
       className="flex flex-col items-center justify-center h-full relative"
       style={{ background: "radial-gradient(ellipse at 50% 20%, #1a1508 0%, #0a0908 60%, #050504 100%)" }}
     >
-      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" style={{ opacity: 0.6 }} />
-
       {/* Decorative top border */}
       <div className="absolute top-0 left-0 right-0 h-1" style={{ background: "linear-gradient(90deg, transparent 5%, #6b5a28 20%, #c4a035 50%, #6b5a28 80%, transparent 95%)" }} />
 
@@ -91,10 +40,10 @@ export default function MainMenu({ onSkirmish, onCampaign }: MainMenuProps) {
         <div className="text-xs tracking-[0.4em] uppercase mb-3" style={{ color: "#6b5a28" }}>
           A Real-Time Strategy Experience
         </div>
-        <h1 className="text-5xl font-bold tracking-wide shimmer-gold leading-tight" style={{ fontFamily: "inherit" }}>
+        <h1 className="text-5xl font-bold tracking-wide leading-tight" style={{ color: "#c4a035" }}>
           THE CHRONICALLY
         </h1>
-        <h1 className="text-5xl font-bold tracking-wide shimmer-gold leading-tight" style={{ fontFamily: "inherit" }}>
+        <h1 className="text-5xl font-bold tracking-wide leading-tight" style={{ color: "#c4a035" }}>
           ONLINE WARS
         </h1>
         <div className="separator-gold mt-4 mx-auto" style={{ width: 300 }} />
@@ -113,9 +62,8 @@ export default function MainMenu({ onSkirmish, onCampaign }: MainMenuProps) {
               key={f.id}
               className="flex flex-col items-center cursor-pointer"
               style={{
-                transition: "all 0.2s ease",
-                transform: isHovered ? "scale(1.12) translateY(-4px)" : "scale(1)",
-                opacity: hoveredFaction && !isHovered ? 0.4 : 1,
+                transition: "all 0.15s ease",
+                opacity: hoveredFaction && !isHovered ? 0.5 : 1,
               }}
               onMouseEnter={() => setHoveredFaction(f.id)}
               onMouseLeave={() => setHoveredFaction(null)}
@@ -129,9 +77,7 @@ export default function MainMenu({ onSkirmish, onCampaign }: MainMenuProps) {
                     ? `radial-gradient(circle, ${info.color}22 0%, #1a1710 70%)`
                     : "radial-gradient(circle, #1e1b14 0%, #12100a 100%)",
                   border: `2px solid ${isHovered ? info.color : "#3a3220"}`,
-                  boxShadow: isHovered
-                    ? `0 0 20px ${info.color}33, inset 0 0 15px ${info.color}11`
-                    : "0 2px 4px rgba(0,0,0,0.4)",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.4)",
                   transition: "all 0.2s ease",
                 }}
               >

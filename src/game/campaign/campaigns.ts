@@ -140,7 +140,7 @@ export const CAMPAIGNS: CampaignChapter[] = [
     id: 'chosen_campaign',
     name: 'The Invisible Hand',
     faction: 'chosen',
-    description: 'The global economy is in shambles (again). The Chosen see this not as a crisis, but as an opportunity. Through shrewd investment and strategic litigation, they will bring order to the chaos — and make a tidy profit while doing so.',
+    description: 'The global economy is in shambles (again). The Chosen see this not as a crisis, but as an opportunity. Through shrewd investment and strategic litigation, they will bring order to the chaos -- and make a tidy profit while doing so.',
     missions: [
       {
         id: 'chosen_m1',
@@ -177,7 +177,7 @@ export const CAMPAIGNS: CampaignChapter[] = [
         id: 'chosen_m2',
         name: 'Hostile Takeover',
         description: 'Use economic warfare to weaken the Chads before attacking.',
-        briefing: 'The Chads have been flexing dangerously close to our borders. Direct confrontation is inadvisable — their biceps are enormous. Instead, we\'ll use a more sophisticated approach: sue them into poverty, then send in the lawyers to clean up.',
+        briefing: 'The Chads have been flexing dangerously close to our borders. Direct confrontation is inadvisable -- their biceps are enormous. Instead, we\'ll use a more sophisticated approach: sue them into poverty, then send in the lawyers to clean up.',
         faction: 'chosen',
         mapId: 'discourse_arena',
         objectives: [
@@ -195,7 +195,7 @@ export const CAMPAIGNS: CampaignChapter[] = [
         id: 'chosen_m3',
         name: 'Space Laser Online',
         description: 'Deploy the ultimate weapon against all remaining factions.',
-        briefing: 'The conspiracies were right all along (sort of). The Space Program is complete, and it\'s time to demonstrate the Orbital Strike to the remaining factions. But beware — they\'ve formed a desperate alliance against you. Time to show them why you control the banks.',
+        briefing: 'The conspiracies were right all along (sort of). The Space Program is complete, and it\'s time to demonstrate the Orbital Strike to the remaining factions. But beware -- they\'ve formed a desperate alliance against you. Time to show them why you control the banks.',
         faction: 'chosen',
         mapId: 'discourse_arena',
         objectives: [
@@ -353,7 +353,7 @@ export const CAMPAIGNS: CampaignChapter[] = [
         id: 'chad_m2',
         name: 'Bulk Season',
         description: 'Expand your territory and out-muscle the competition.',
-        briefing: 'It\'s bulk season, which means consuming everything in sight — including enemy territory. The Crusaders have been white-knighting too close to your turf. Show them that chivalry is no match for 315lb bench press. Time to get SWOLE.',
+        briefing: 'It\'s bulk season, which means consuming everything in sight -- including enemy territory. The Crusaders have been white-knighting too close to your turf. Show them that chivalry is no match for 315lb bench press. Time to get SWOLE.',
         faction: 'chads',
         mapId: 'discourse_arena',
         objectives: [

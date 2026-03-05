@@ -295,7 +295,7 @@ export default function GameView({ settings, onExit }: GameViewProps) {
         onAbilityCommand={(abilityId) => inputRef.current?.startAbilityTarget(abilityId)}
       />
 
-      <canvas ref={canvasRef} id="game-canvas" className="flex-1" style={{ display: "block" }} />
+      <canvas ref={canvasRef} id="game-canvas" className="flex-1" style={{ display: "block", marginBottom: 200 }} />
 
       {/* Victory / Defeat overlay */}
       {gameOver && (

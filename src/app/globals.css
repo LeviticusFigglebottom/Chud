@@ -370,9 +370,11 @@ html, body {
    BOTTOM PANEL - WC3 Style: Portrait | Stats | Actions
    ===================================================== */
 .wc3-bottom-panel {
-  position: relative;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: 200px;
-  flex-shrink: 0;
   background: linear-gradient(180deg, #1e1a12 0%, #0e0c08 100%);
   z-index: 20;
 }

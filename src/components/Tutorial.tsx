@@ -454,7 +454,7 @@ export default function Tutorial({ onExit }: TutorialProps) {
       />
 
       {/* Game canvas */}
-      <canvas ref={canvasRef} id="game-canvas" className="flex-1" style={{ display: "block" }} />
+      <canvas ref={canvasRef} id="game-canvas" className="flex-1" style={{ display: "block", marginBottom: 200 }} />
 
       {/* Tutorial floating panel - overlaid on the game */}
       <div className="tutorial-overlay">

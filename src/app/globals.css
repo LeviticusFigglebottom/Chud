@@ -209,15 +209,22 @@ html, body {
 }
 
 /* =====================================================
-   WC3-STYLE HUD - Top Panel + Bottom Command Bar
+   WC3-STYLE HUD - Top Resource Bar + Bottom Info/Action Panel
    ===================================================== */
 
-/* --- TOP PANEL (minimap + resources + info) --- */
-.wc3-top-panel {
+/* --- TOP BAR (minimap + resources + timer) --- */
+.wc3-top-bar {
   position: relative;
-  height: 160px;
+  height: 32px;
   flex-shrink: 0;
   z-index: 20;
+}
+
+.wc3-top-bar-inner {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  background: linear-gradient(180deg, #1e1a12 0%, #0e0c08 100%);
 }
 
 .wc3-frame-bottom-edge {
@@ -225,31 +232,13 @@ html, body {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(180deg, #2a2010 0%, #5a4a28 50%, #3a3018 100%);
-  border-bottom: 1px solid #8a7a48;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  height: 2px;
+  background: linear-gradient(180deg, #5a4a28, #3a3018);
+  border-bottom: 1px solid #6b5a28;
   z-index: 1;
 }
 
-.wc3-top-inner {
-  display: flex;
-  height: 100%;
-  background: linear-gradient(180deg, #1e1a12 0%, #161310 40%, #0e0c08 100%);
-}
-
-/* --- MINIMAP (top-left) --- */
-.wc3-minimap-frame-top {
-  width: 160px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  background: linear-gradient(135deg, #1a1710 0%, #12100a 50%, #1a1710 100%);
-  border-right: 2px solid #3a3018;
-  box-shadow: inset -1px 0 0 rgba(138,120,72,0.15);
-}
-
+/* Minimap */
 .wc3-minimap-border {
   padding: 3px;
   background: linear-gradient(135deg, #5a4a28, #3a3018, #5a4a28);
@@ -263,22 +252,14 @@ html, body {
   box-shadow: inset 0 0 8px rgba(0,0,0,0.6);
 }
 
-/* --- CENTER PANEL (resources + info) --- */
-.wc3-center-panel {
-  flex: 1;
-  min-width: 200px;
-  display: flex;
-  flex-direction: column;
-  border-right: 2px solid #3a3018;
-}
-
+/* Resources in top bar */
 .wc3-res-bar {
+  flex: 1;
   display: flex;
   align-items: center;
-  padding: 4px 12px;
-  gap: 16px;
-  background: linear-gradient(180deg, #2a2518 0%, #1a1710 100%);
-  border-bottom: 1px solid #3a3018;
+  padding: 0 16px;
+  gap: 20px;
+  height: 100%;
 }
 
 .wc3-res-group {
@@ -294,8 +275,8 @@ html, body {
 }
 
 .wc3-res-icon {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 2px;
   border: 1px solid rgba(255,255,255,0.15);
 }
@@ -327,60 +308,13 @@ html, body {
   min-width: 30px;
 }
 
-/* Info area below resources */
-.wc3-info-area {
-  flex: 1;
-  padding: 6px 12px;
-  overflow-y: auto;
-}
-
-.wc3-info-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.wc3-info-empty-text {
-  font-size: 11px;
-  color: #3a3220;
-  font-style: italic;
-  margin-bottom: 6px;
-}
-
-.wc3-info-controls {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 2px 12px;
-}
-
-.wc3-control-row {
-  display: flex;
-  gap: 6px;
-  font-size: 10px;
-}
-
-.wc3-control-key {
-  color: #6b5a28;
-  font-weight: 700;
-  min-width: 40px;
-}
-
-.wc3-control-desc {
-  color: #4a4030;
-}
-
-/* --- RIGHT CONTROLS COLUMN --- */
+/* Timer & controls in top bar */
 .wc3-controls-col {
-  width: 70px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 8px 4px;
-  gap: 6px;
-  background: linear-gradient(135deg, #1a1710 0%, #12100a 100%);
+  gap: 8px;
+  padding: 0 8px;
+  height: 100%;
 }
 
 .wc3-timer {
@@ -399,12 +333,12 @@ html, body {
 
 .wc3-ctrl-btns {
   display: flex;
-  gap: 4px;
+  gap: 3px;
 }
 
 .wc3-top-btn {
-  width: 24px;
-  height: 22px;
+  width: 22px;
+  height: 20px;
   background: linear-gradient(180deg, #3a3220, #1e1b14);
   border: 1px solid #4a4028;
   color: #8a7e60;
@@ -432,89 +366,160 @@ html, body {
   border-color: #a03030;
 }
 
-/* --- COMPACT UNIT/BUILDING INFO (top panel) --- */
-.wc3-compact-info {
-  height: 100%;
+/* =====================================================
+   BOTTOM PANEL - WC3 Style: Portrait | Stats | Actions
+   ===================================================== */
+.wc3-bottom-panel {
+  position: relative;
+  height: 200px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #1e1a12 0%, #0e0c08 100%);
+  z-index: 20;
 }
 
-.wc3-compact-row {
+.wc3-frame-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(180deg, #5a4a28, #3a3018);
+  border-top: 1px solid #8a7a48;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.5);
+  z-index: 1;
+}
+
+.wc3-bottom-inner {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  height: 100%;
+  padding-top: 4px;
 }
 
-.wc3-portrait-sm {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #2a2518, #12100a);
-  border: 2px solid #5a4a28;
-  border-radius: 3px;
+/* --- LEFT: Minimap --- */
+.wc3-minimap-area {
+  width: 160px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: linear-gradient(135deg, #1a1710 0%, #12100a 100%);
+  border-right: 2px solid #3a3018;
+}
+
+/* --- CENTER-LEFT: Portrait + Stats --- */
+.wc3-info-center {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  border-right: 2px solid #3a3018;
+}
+
+.wc3-portrait-col {
+  width: 120px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 6px;
+  border-right: 1px solid #2a2518;
+}
+
+.wc3-stats-col {
+  flex: 1;
+  padding: 8px 12px;
+  overflow-y: auto;
+}
+
+.wc3-portrait {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.wc3-portrait-frame {
+  width: 76px;
+  height: 76px;
+  background: linear-gradient(135deg, #2a2518, #0e0c08);
+  border: 3px solid #5a4a28;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  flex-shrink: 0;
-  box-shadow: inset 0 0 6px rgba(0,0,0,0.5), 0 0 4px rgba(0,0,0,0.3);
+  box-shadow: inset 0 0 12px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+  margin-bottom: 4px;
 }
 
-.wc3-portrait-icon-sm {
-  font-size: 16px;
-  color: #d4c8a0;
-}
-
-.wc3-hero-badge-sm {
-  position: absolute;
-  bottom: -3px;
-  right: -3px;
-  background: linear-gradient(135deg, #c4a035, #8a7020);
-  color: #fff;
-  font-size: 7px;
-  font-weight: 700;
-  padding: 0 2px;
-  border-radius: 2px;
-  border: 1px solid #e0c040;
-}
-
-.wc3-portrait-building {
+.wc3-portrait-frame-bldg {
   border-radius: 0;
 }
 
-.wc3-compact-details {
-  flex: 1;
-  min-width: 0;
+.wc3-portrait-frame-multi {
+  border-color: #6b5a28;
+  background: linear-gradient(135deg, #1a1710, #0e0c08);
 }
 
-.wc3-compact-name {
-  font-size: 12px;
+.wc3-portrait-icon {
+  font-size: 32px;
+  color: #d4c8a0;
+}
+
+.wc3-hero-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: linear-gradient(135deg, #c4a035, #8a7020);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid #e0c040;
+}
+
+.wc3-portrait-name {
+  font-size: 11px;
   font-weight: 700;
   color: #d4c8a0;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 2px;
+  max-width: 100%;
+  margin-bottom: 4px;
 }
 
-.wc3-hero-tag {
-  margin-left: 4px;
-  font-size: 9px;
-  color: #c4a035;
-}
-
-.wc3-hp-bar-sm {
-  position: relative;
-  margin-bottom: 3px;
-}
-
-.wc3-compact-stats {
+.wc3-portrait-empty {
   display: flex;
-  gap: 8px;
-  font-size: 10px;
-  font-weight: 700;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  opacity: 0.4;
 }
 
-/* --- HP BAR --- */
+.wc3-portrait-empty-icon {
+  font-size: 28px;
+  color: #3a3220;
+  margin-bottom: 4px;
+}
+
+.wc3-portrait-empty-text {
+  font-size: 10px;
+  color: #3a3220;
+  font-style: italic;
+}
+
+/* HP bar (used in portraits) */
+.wc3-hp-bar {
+  width: 100%;
+  position: relative;
+}
+
 .wc3-hp-bar-bg {
-  height: 8px;
+  height: 10px;
   background: #0a0a08;
   border: 1px solid #3a3018;
   border-radius: 1px;
@@ -531,27 +536,121 @@ html, body {
   position: absolute;
   right: 4px;
   top: 0;
-  font-size: 7px;
+  font-size: 8px;
   font-weight: 700;
   color: rgba(255,255,255,0.7);
-  line-height: 10px;
+  line-height: 12px;
   text-shadow: 0 1px 2px rgba(0,0,0,0.8);
 }
 
-/* --- MULTI-SELECT --- */
-.wc3-multi-select {
-  height: 100%;
+/* --- CENTER: Stats panel --- */
+.wc3-stats-area {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px 12px;
+  border-right: 2px solid #3a3018;
+  overflow-y: auto;
 }
 
-.wc3-multi-header {
-  font-size: 11px;
+.wc3-stats-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wc3-stat-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.wc3-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wc3-stat-label {
+  font-size: 9px;
   font-weight: 700;
-  color: #6b5a28;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 4px;
+  color: #5a5030;
+  letter-spacing: 0.05em;
 }
 
+.wc3-stat-val {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.wc3-stat-carry {
+  font-size: 10px;
+  color: #4090d0;
+  font-weight: 600;
+}
+
+.wc3-stat-desc {
+  font-size: 10px;
+  color: #5a5030;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.wc3-train-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.wc3-train-progress {
+  font-size: 10px;
+  color: #4090d0;
+  font-weight: 600;
+}
+
+.wc3-train-bar {
+  height: 6px;
+  background: #0a0a08;
+  border: 1px solid #3a3018;
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.wc3-train-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2060a0, #4090d0);
+  transition: width 0.3s;
+}
+
+.wc3-train-queue-count {
+  font-size: 9px;
+  color: #5a5030;
+}
+
+.wc3-stats-empty {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  padding-top: 8px;
+}
+
+.wc3-control-row {
+  display: flex;
+  gap: 6px;
+  font-size: 10px;
+}
+
+.wc3-control-key {
+  color: #6b5a28;
+  font-weight: 700;
+  min-width: 36px;
+}
+
+.wc3-control-desc {
+  color: #4a4030;
+}
+
+/* --- MULTI SELECT (in stats area) --- */
 .wc3-multi-grid {
   display: flex;
   flex-wrap: wrap;
@@ -559,8 +658,8 @@ html, body {
 }
 
 .wc3-multi-icon {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   background: linear-gradient(180deg, #1e1b14, #0e0c08);
   border: 1px solid #3a3018;
   display: flex;
@@ -571,7 +670,7 @@ html, body {
 }
 
 .wc3-multi-icon-text {
-  font-size: 11px;
+  font-size: 13px;
   color: #d4c8a0;
 }
 
@@ -588,49 +687,26 @@ html, body {
   height: 100%;
 }
 
-/* --- BOTTOM COMMAND BAR --- */
-.wc3-bottom-cmd-bar {
-  position: relative;
-  height: 80px;
+/* --- RIGHT: Action grid (4x3) --- */
+.wc3-action-area {
+  width: 220px;
   flex-shrink: 0;
-  background: linear-gradient(180deg, #1e1a12 0%, #0e0c08 100%);
-}
-
-.wc3-frame-top {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(180deg, #5a4a28 0%, #3a3018 50%, #2a2010 100%);
-  border-top: 1px solid #8a7a48;
-  box-shadow: inset 0 1px 0 rgba(196,160,53,0.3), 0 -2px 8px rgba(0,0,0,0.5);
-  z-index: 1;
-}
-
-.wc3-cmd-bar-inner {
+  padding: 6px;
   display: flex;
   align-items: center;
+  justify-content: center;
+}
+
+.wc3-action-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 3px;
+  width: 100%;
   height: 100%;
-  padding: 6px 12px;
-  padding-top: 10px;
-  gap: 4px;
-  overflow-x: auto;
 }
 
-.wc3-cmd-bar-empty {
-  flex: 1;
-  text-align: center;
-  font-size: 11px;
-  color: #3a3220;
-  font-style: italic;
-}
-
-/* --- COMMAND BUTTONS (horizontal bar style) --- */
-.wc3-cmd-btn-bar {
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
+.wc3-grid-btn {
   background: linear-gradient(180deg, #2a2518 0%, #1a1710 50%, #12100a 100%);
   border: 2px solid #4a4028;
   display: flex;
@@ -639,42 +715,61 @@ html, body {
   justify-content: center;
   cursor: pointer;
   transition: all 0.1s;
-  padding: 2px;
   position: relative;
   box-shadow: inset 0 1px 0 rgba(196,160,53,0.1), 0 1px 3px rgba(0,0,0,0.3);
+  padding: 2px;
+  min-height: 0;
 }
 
-.wc3-cmd-btn-bar:hover {
+.wc3-grid-btn:hover:not(.wc3-grid-btn-empty) {
   border-color: #c4a035;
   background: linear-gradient(180deg, #3a3528 0%, #2a2518 50%, #1e1b14 100%);
   box-shadow: inset 0 1px 0 rgba(196,160,53,0.2), 0 0 6px rgba(196,160,53,0.2);
 }
 
-.wc3-cmd-btn-bar:active {
-  transform: scale(0.95);
+.wc3-grid-btn:active:not(.wc3-grid-btn-empty) {
+  transform: scale(0.94);
 }
 
-.wc3-cmd-btn-icon {
-  font-size: 16px;
-  color: #d4c8a0;
-  line-height: 1;
+.wc3-grid-btn-empty {
+  cursor: default;
+  opacity: 0.3;
+  border-color: #2a2518;
 }
 
-.wc3-cmd-btn-label {
-  font-size: 7px;
-  font-weight: 700;
-  color: #6a6040;
-  margin-top: 1px;
-  white-space: nowrap;
-}
-
-.wc3-cmd-btn-active {
+.wc3-grid-btn-active {
   border-color: #c4a035 !important;
   background: linear-gradient(180deg, #4a4220 0%, #3a3518 50%, #2a2510 100%) !important;
   box-shadow: inset 0 0 8px rgba(196,160,53,0.3), 0 0 6px rgba(196,160,53,0.3) !important;
 }
 
-.wc3-cmd-btn-cooldown {
+.wc3-grid-btn-icon {
+  font-size: 18px;
+  color: #d4c8a0;
+  line-height: 1;
+}
+
+.wc3-grid-btn-hotkey {
+  font-size: 7px;
+  font-weight: 700;
+  color: #6b5a28;
+  position: absolute;
+  bottom: 1px;
+  right: 2px;
+}
+
+.wc3-grid-btn-cost {
+  font-size: 7px;
+  font-weight: 700;
+  color: #6a6040;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-align: center;
+}
+
+.wc3-grid-btn-cd {
   position: absolute;
   top: 1px;
   right: 2px;
@@ -688,7 +783,7 @@ html, body {
 .tutorial-overlay {
   position: absolute;
   left: 12px;
-  top: 172px;
+  top: 44px;
   width: 320px;
   z-index: 40;
   background: linear-gradient(180deg, rgba(26,23,16,0.95) 0%, rgba(14,12,8,0.95) 100%);

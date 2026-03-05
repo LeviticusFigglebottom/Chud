@@ -173,9 +173,9 @@ export default function Tutorial({ onExit }: TutorialProps) {
     const canvas = canvasRef.current;
     const minimap = minimapRef.current;
 
-    const topPanelHeight = 160;
-    const bottomPanelHeight = 80;
-    const hudHeight = topPanelHeight + bottomPanelHeight;
+    const topBarHeight = 32;
+    const bottomPanelHeight = 200;
+    const hudHeight = topBarHeight + bottomPanelHeight;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight - hudHeight;
     minimap.width = 140;

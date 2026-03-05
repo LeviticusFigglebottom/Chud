@@ -28,16 +28,12 @@ export class ResourceSystem {
       const dropOff = this.findNearestDropOff(unit, owner);
       if (!dropOff) return;
 
-      // Path to center of building, drop off when near any part of building
-      const buildingCenterX = dropOff.position.x + dropOff.size.x / 2;
-      const buildingCenterY = dropOff.position.y + dropOff.size.y / 2;
-      const buildingCenter = { x: buildingCenterX, y: buildingCenterY };
-
-      // Check if unit is close to any edge of the building (not just top-left corner)
-      const nearBuilding = unit.position.x >= dropOff.position.x - 30 &&
-                          unit.position.x <= dropOff.position.x + dropOff.size.x + 30 &&
-                          unit.position.y >= dropOff.position.y - 30 &&
-                          unit.position.y <= dropOff.position.y + dropOff.size.y + 30;
+      // Check if unit is close to any edge of the building
+      const margin = 25;
+      const nearBuilding = unit.position.x >= dropOff.position.x - margin &&
+                          unit.position.x <= dropOff.position.x + dropOff.size.x + margin &&
+                          unit.position.y >= dropOff.position.y - margin &&
+                          unit.position.y <= dropOff.position.y + dropOff.size.y + margin;
 
       if (nearBuilding) {
         // Drop off resources
@@ -50,7 +46,10 @@ export class ResourceSystem {
           unit.path = this.engine.pathFinder.findPath(unit.position, unit.target);
         }
       } else if (unit.path.length === 0) {
-        unit.path = this.engine.pathFinder.findPath(unit.position, buildingCenter);
+        // Path to a spread point on the nearest edge of the building
+        // Each worker targets a different edge point based on their ID hash
+        const dest = this.getDropOffPoint(unit, dropOff);
+        unit.path = this.engine.pathFinder.findPath(unit.position, dest);
       }
     } else {
       // Find resource to gather
@@ -68,10 +67,11 @@ export class ResourceSystem {
           tile.resource.amount -= gatherAmount;
           unit.carryingResource = { type: tile.resource.type, amount: gatherAmount };
 
-          // Head back to base
+          // Head back to base - path to spread point on building edge
           const dropOff = this.findNearestDropOff(unit, owner);
           if (dropOff) {
-            unit.path = this.engine.pathFinder.findPath(unit.position, dropOff.position);
+            const dest = this.getDropOffPoint(unit, dropOff);
+            unit.path = this.engine.pathFinder.findPath(unit.position, dest);
           }
         } else {
           // Resource depleted - find nearest available resource of same type
@@ -87,6 +87,39 @@ export class ResourceSystem {
         }
       }
     }
+  }
+
+  // Compute a spread destination on the building perimeter so workers don't all converge on same spot
+  private getDropOffPoint(unit: Unit, building: Building): Vector2 {
+    // Hash unit ID to get a consistent offset per worker
+    let hash = 0;
+    for (let i = 0; i < unit.id.length; i++) {
+      hash = ((hash << 5) - hash + unit.id.charCodeAt(i)) | 0;
+    }
+    // Pick a point along the building perimeter
+    const perimeter = 2 * (building.size.x + building.size.y);
+    const offset = ((hash & 0x7fffffff) % Math.floor(perimeter));
+    const margin = 10; // How far outside the building edge to target
+
+    let px: number, py: number;
+    if (offset < building.size.x) {
+      // Top edge
+      px = building.position.x + offset;
+      py = building.position.y - margin;
+    } else if (offset < building.size.x + building.size.y) {
+      // Right edge
+      px = building.position.x + building.size.x + margin;
+      py = building.position.y + (offset - building.size.x);
+    } else if (offset < 2 * building.size.x + building.size.y) {
+      // Bottom edge
+      px = building.position.x + building.size.x - (offset - building.size.x - building.size.y);
+      py = building.position.y + building.size.y + margin;
+    } else {
+      // Left edge
+      px = building.position.x - margin;
+      py = building.position.y + building.size.y - (offset - 2 * building.size.x - building.size.y);
+    }
+    return { x: px, y: py };
   }
 
   private findNearestDropOff(unit: Unit, owner: Player): Building | null {

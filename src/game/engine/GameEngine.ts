@@ -400,35 +400,46 @@ export class GameEngine {
         }
       }
 
-      // Unit separation: push apart from nearby units to prevent clustering
+      // Unit separation: push apart from nearby units to prevent overlap and clustering
       const isGathering = unit.state === 'gathering' || unit.state === 'building';
       const isIdle = unit.state === 'idle';
       for (const [, other] of this.state.entities) {
         if (other.type !== 'unit' || other.id === entity.id) continue;
         const ou = other as Unit;
         if (ou.state === 'dead') continue;
-        // Skip separation between two gathering workers to avoid gridlock at resources/drop-offs
         const otherGathering = ou.state === 'gathering' || ou.state === 'building';
-        if (isGathering && otherGathering) continue;
         const dx2 = unit.position.x - ou.position.x;
         const dy2 = unit.position.y - ou.position.y;
-        const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-        // Larger separation radius for combat units, smaller for workers
-        const minDist = isGathering ? 10 : (isIdle ? 22 : 24);
-        if (dist2 > 0 && dist2 < minDist) {
-          // Stronger push force to prevent pile-ups, especially when stationary
-          const overlap = minDist - dist2;
-          const pushForce = isGathering
-            ? overlap * 0.15
-            : overlap * (isIdle ? 0.5 : 0.4);
-          let nx = dx2 / dist2;
-          let ny = dy2 / dist2;
-          // If units are nearly on top of each other, push in a random direction
-          if (dist2 < 1) {
-            const angle = Math.random() * Math.PI * 2;
+        const rawDist = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+
+        // Hard collision: units must NEVER overlap regardless of state
+        // Use a smaller hard radius for workers, larger for combat
+        const hardRadius = (isGathering && otherGathering) ? 8 : 14;
+        // Soft separation: gentle push to prevent clustering
+        const softRadius = isGathering ? 14 : (isIdle ? 22 : 20);
+        const minDist = Math.max(hardRadius, softRadius);
+
+        if (rawDist > 0 && rawDist < minDist) {
+          let nx = dx2 / rawDist;
+          let ny = dy2 / rawDist;
+          // If nearly overlapping, push in a deterministic direction based on IDs
+          if (rawDist < 2) {
+            const idHash = (unit.id.charCodeAt(0) + unit.id.length * 7) & 0xff;
+            const angle = (idHash / 256) * Math.PI * 2;
             nx = Math.cos(angle);
             ny = Math.sin(angle);
           }
+
+          let pushForce: number;
+          if (rawDist < hardRadius) {
+            // Hard push - prevent physical overlap, strong force
+            pushForce = (hardRadius - rawDist) * 0.6;
+          } else {
+            // Soft push - gentle separation to avoid clustering
+            const overlap = softRadius - rawDist;
+            pushForce = overlap * (isGathering ? 0.1 : (isIdle ? 0.35 : 0.25));
+          }
+
           unit.position.x += nx * pushForce;
           unit.position.y += ny * pushForce;
         }

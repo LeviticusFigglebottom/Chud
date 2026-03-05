@@ -26,6 +26,14 @@ export class InputHandler {
   onSelectionChange?: (entities: Entity[]) => void;
   onModeChange?: (mode: InputMode) => void;
 
+  // Expose placement state for rendering
+  getPlacementPreview(): { buildingType: string; worldPos: Vector2; canPlace: boolean } | null {
+    if (this.mode !== 'building_placement' || !this.pendingBuildingType) return null;
+    const worldPos = this.engine.screenToWorld(this.mouseScreenPos.x, this.mouseScreenPos.y);
+    const canPlace = this.engine.buildingSystem.canPlaceBuilding(this.pendingBuildingType, worldPos);
+    return { buildingType: this.pendingBuildingType, worldPos, canPlace };
+  }
+
   constructor(engine: GameEngine, canvas: HTMLCanvasElement) {
     this.engine = engine;
     this.canvas = canvas;

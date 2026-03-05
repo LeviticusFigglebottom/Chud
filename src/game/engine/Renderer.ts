@@ -86,6 +86,9 @@ export class Renderer {
   private animTime = 0;
   private waterFrame = 0;
 
+  // Building placement preview
+  placementPreview: { buildingType: string; worldPos: Vector2; canPlace: boolean } | null = null;
+
   constructor(canvas: HTMLCanvasElement, minimapCanvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
@@ -109,6 +112,7 @@ export class Renderer {
 
     this.renderTerrain(state);
     this.renderEntities(state);
+    this.renderBuildingPlacementPreview(state);
     this.renderSelectionBoxes(state);
     this.renderFogOfWar(state);
 
@@ -1567,6 +1571,60 @@ export class Renderer {
     ctx.strokeStyle = 'rgba(0,0,0,0.5)';
     ctx.lineWidth = 0.5;
     ctx.strokeRect(x - 1, y - 1, width + 2, barHeight + 2);
+  }
+
+  // Building placement ghost with green/red tile grid
+  private renderBuildingPlacementPreview(state: GameState): void {
+    if (!this.placementPreview) return;
+    const { ctx } = this;
+    const { buildingType, worldPos, canPlace } = this.placementPreview;
+    const def = getBuildingDefinition(buildingType);
+    if (!def) return;
+
+    const tileSize = state.config.tileSize;
+    const bw = def.size.x;
+    const bh = def.size.y;
+    const bx = worldPos.x;
+    const by = worldPos.y;
+
+    // Draw tile grid overlay
+    const startTX = Math.floor(bx / tileSize);
+    const startTY = Math.floor(by / tileSize);
+    const endTX = Math.ceil((bx + bw) / tileSize);
+    const endTY = Math.ceil((by + bh) / tileSize);
+
+    for (let ty = startTY; ty < endTY; ty++) {
+      for (let tx = startTX; tx < endTX; tx++) {
+        const tile = state.map[ty]?.[tx];
+        const tileOk = tile && tile.buildable;
+        ctx.fillStyle = tileOk ? 'rgba(0, 200, 0, 0.25)' : 'rgba(200, 0, 0, 0.35)';
+        ctx.fillRect(tx * tileSize, ty * tileSize, tileSize, tileSize);
+        ctx.strokeStyle = tileOk ? 'rgba(0, 200, 0, 0.5)' : 'rgba(200, 0, 0, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(tx * tileSize, ty * tileSize, tileSize, tileSize);
+      }
+    }
+
+    // Draw building ghost
+    ctx.globalAlpha = canPlace ? 0.6 : 0.35;
+    ctx.fillStyle = canPlace ? '#2a5a20' : '#5a2020';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = canPlace ? '#40c040' : '#c04040';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(bx, by, bw, bh);
+    ctx.setLineDash([]);
+
+    // Draw icon
+    ctx.globalAlpha = canPlace ? 0.8 : 0.5;
+    ctx.fillStyle = '#d4c8a0';
+    ctx.font = `bold ${Math.min(bw, bh) * 0.4}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(def.icon, bx + bw / 2, by + bh / 2);
+    ctx.textBaseline = 'alphabetic';
+
+    ctx.globalAlpha = 1;
   }
 
   private renderSelectionBoxes(state: GameState): void {

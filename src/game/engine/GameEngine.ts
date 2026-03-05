@@ -146,12 +146,21 @@ export class GameEngine {
         player.maxPopulation += def.providesPopulation;
       }
     }
+
+    // Mark tiles under building as unwalkable for pathfinding
+    this.markBuildingTiles(building, false);
+
     return building;
   }
 
   removeEntity(entityId: string): void {
     const entity = this.state.entities.get(entityId);
     if (!entity) return;
+
+    // Restore tiles if building is removed
+    if (entity.type === 'building') {
+      this.markBuildingTiles(entity as Building, true);
+    }
 
     this.state.entities.delete(entityId);
     for (const player of this.state.players) {
@@ -370,6 +379,7 @@ export class GameEngine {
       }
     }
 
+    this.updateUpkeep();
     this.checkVictoryConditions();
   }
 
@@ -541,6 +551,44 @@ export class GameEngine {
       }
     }
     return result;
+  }
+
+  // Mark/unmark tiles under a building as unwalkable/unbuildable
+  markBuildingTiles(building: Building, restore: boolean): void {
+    const tileSize = this.state.config.tileSize;
+    const startTX = Math.floor(building.position.x / tileSize);
+    const startTY = Math.floor(building.position.y / tileSize);
+    const endTX = Math.ceil((building.position.x + building.size.x) / tileSize);
+    const endTY = Math.ceil((building.position.y + building.size.y) / tileSize);
+
+    for (let ty = startTY; ty < endTY; ty++) {
+      for (let tx = startTX; tx < endTX; tx++) {
+        const tile = this.state.map[ty]?.[tx];
+        if (!tile) continue;
+        if (restore) {
+          // Only restore if terrain allows walking (not water/mountain)
+          const terrain = tile.terrain;
+          tile.walkable = terrain !== 'water' && terrain !== 'mountain';
+          tile.buildable = tile.walkable && terrain !== 'swamp';
+        } else {
+          tile.walkable = false;
+          tile.buildable = false;
+        }
+      }
+    }
+  }
+
+  // Upkeep: drain tendies based on unit population every 10 seconds
+  updateUpkeep(): void {
+    if (this.state.tick % 600 !== 0) return; // ~10 sec at 60 ticks/sec
+    for (const player of this.state.players) {
+      if (player.defeated) continue;
+      // 1 tendie per 5 population, minimum 0
+      const upkeep = Math.floor(player.population / 5);
+      if (upkeep > 0) {
+        player.resources.tendies = Math.max(0, player.resources.tendies - upkeep);
+      }
+    }
   }
 
   getEntitiesAt(pos: Vector2, radius: number): Entity[] {

@@ -209,6 +209,8 @@ export default function GameView({ settings, onExit }: GameViewProps) {
     const gameLoop = (timestamp: number) => {
       engine.update(timestamp);
       input.updateCamera();
+      // Pass placement preview to renderer before drawing
+      renderer.placementPreview = input.getPlacementPreview();
       renderer.render(engine.state);
 
       // Selection box overlay

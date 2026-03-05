@@ -27,33 +27,31 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "welcome",
     title: "Welcome, Commander",
-    description: "Welcome to The Chronically Online Wars. This tutorial will teach you the basics of commanding your faction to victory.",
-    instruction: "Press NEXT to continue.",
+    description: "Welcome to The Chronically Online Wars. This tutorial will teach you the basics of commanding your faction to ultimate victory.",
+    instruction: "Press NEXT to begin training.",
     autoComplete: 0,
   },
   {
     id: "camera",
     title: "Camera Controls",
-    description: "Move your view with WASD keys or Arrow keys. Scroll the mouse wheel to zoom in and out.",
-    instruction: "Try moving the camera around with WASD, then press NEXT.",
+    description: "Move your view with WASD or Arrow keys. Scroll mouse wheel to zoom. The minimap (bottom-left) lets you click to jump anywhere on the battlefield.",
+    instruction: "Move the camera around with WASD, then press NEXT.",
     highlight: "map",
     autoComplete: 0,
   },
   {
     id: "select_units",
     title: "Selecting Units",
-    description: "Left-click on a unit to select it. Click and drag to box-select multiple units. Hold Shift to add to your selection.",
-    instruction: "Try selecting one of your workers (the small figures near your base).",
+    description: "Left-click a unit to select it. Click-drag to box-select multiple units. Hold Shift to add to selection. Ctrl+1-5 saves control groups, 1-5 recalls them.",
+    instruction: "Select one of your workers near your base.",
     highlight: "selection",
-    checkComplete: (engine) => {
-      return engine.state.selectedEntities.length > 0;
-    },
+    checkComplete: (engine) => engine.state.selectedEntities.length > 0,
   },
   {
     id: "move_units",
     title: "Moving Units",
-    description: "With units selected, right-click on the ground to move them there. Your units will pathfind around obstacles automatically.",
-    instruction: "Select a worker and right-click somewhere nearby to move them.",
+    description: "With units selected, right-click on the ground to issue a move order. Units pathfind around buildings and terrain automatically.",
+    instruction: "Right-click somewhere to move your selected units.",
     checkComplete: (engine) => {
       for (const [, e] of engine.state.entities) {
         if (e.type === "unit") {
@@ -68,8 +66,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "gather_resources",
     title: "Gathering Resources",
-    description: "Your economy runs on three resources: Copium (blue crystals), Clout (golden trees), and Tendies (rare chicken). Workers gather resources when you right-click on a resource node.",
-    instruction: "Select a worker and right-click on a blue Copium crystal or golden Clout tree nearby.",
+    description: "Your economy needs Copium (blue crystals), Clout (golden trees), and Tendies (rare food). Right-click a resource node with a worker to begin gathering. Workers automatically shuttle between the resource and your nearest base.",
+    instruction: "Right-click a Copium crystal or Clout tree with a worker selected.",
     highlight: "resources",
     checkComplete: (engine) => {
       for (const [, e] of engine.state.entities) {
@@ -84,9 +82,9 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "select_building",
-    title: "Buildings and Training",
-    description: "Left-click on your main building (the large structure) to select it. The command bar at the bottom will show what units it can train.",
-    instruction: "Left-click directly on your main building to select it.",
+    title: "Your Main Building",
+    description: "Click your main base building to select it. The bottom-right panel shows available actions: units you can train. Each unit has a cost shown below its icon.",
+    instruction: "Left-click your main building (the large structure).",
     highlight: "commands",
     checkComplete: (engine) => {
       for (const id of engine.state.selectedEntities) {
@@ -98,8 +96,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "train_unit",
-    title: "Training Workers",
-    description: "With your main building selected, click on a unit icon in the command bar at the bottom to queue training. Workers cost 50 Copium.",
+    title: "Training Units",
+    description: "With your building selected, click a unit icon in the action grid (bottom-right) to queue training. You can queue multiple units. Workers cost 50 Copium. Military units cost more and need advanced buildings.",
     instruction: "Train a new worker from your main building.",
     checkComplete: (engine) => {
       for (const [, e] of engine.state.entities) {
@@ -115,31 +113,90 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "build_structure",
     title: "Constructing Buildings",
-    description: "Select a worker and click the Build icon (hammer) in the command bar, or press B. Choose a structure, then click on the map to place it.",
-    instruction: "Select a worker and try building a supply structure.",
+    description: "Select a worker and click the Build button (hammer icon) or press B. A grid overlay shows valid placement in green and invalid in red. Click to place, then workers will construct it. Buildings provide population cap, training options, and tech.",
+    instruction: "Select a worker, press B, and place a building on a green tile.",
     highlight: "commands",
+    checkComplete: (engine) => {
+      let playerBuildings = 0;
+      for (const [, e] of engine.state.entities) {
+        if (e.type === "building") {
+          const owner = engine.getEntityOwner(e.id);
+          if (owner && !owner.isAI) playerBuildings++;
+        }
+      }
+      return playerBuildings >= 2; // Must have placed at least one new building
+    },
+  },
+  {
+    id: "upkeep",
+    title: "Upkeep & Economy",
+    description: "Your army consumes Tendies as upkeep. For every 5 population, 1 Tendie is consumed every 10 seconds. Keep your economy strong! Gather all three resources to sustain a large army.",
+    instruction: "Press NEXT to continue.",
     autoComplete: 0,
   },
   {
-    id: "minimap",
-    title: "The Minimap",
-    description: "The minimap in the top-left shows the entire battlefield. Click on it to jump your camera to that location.",
-    instruction: "Try clicking on the minimap to move your view.",
-    highlight: "minimap",
-    autoComplete: 0,
+    id: "patrol",
+    title: "Patrol & Defense",
+    description: "Select units and press P, then click to set a patrol route. Units will walk back and forth and engage enemies they encounter. Use this to guard your base perimeter while you focus elsewhere.",
+    instruction: "Select a worker or unit, press P, and click a location to patrol.",
+    checkComplete: (engine) => {
+      for (const [, e] of engine.state.entities) {
+        if (e.type === "unit") {
+          const unit = e as import("@/game/engine/types").Unit;
+          const owner = engine.getEntityOwner(unit.id);
+          if (owner && !owner.isAI && unit.state === "patrolling") return true;
+        }
+      }
+      return false;
+    },
   },
   {
-    id: "combat",
-    title: "Combat",
-    description: "To attack enemies, select military units and right-click on an enemy, or press A then click the ground to attack-move. Press H to stop/hold. Use control groups (Ctrl+1-5 to assign, 1-5 to recall).",
-    instruction: "Press NEXT when ready.",
+    id: "attack_move",
+    title: "Attack-Move",
+    description: "Press A then click the ground to issue an attack-move. Units will walk to the target, automatically engaging any enemies on the way. This is the safest way to advance across the map.",
+    instruction: "Select units, press A, then click the ground to attack-move.",
+    checkComplete: (engine) => {
+      for (const [, e] of engine.state.entities) {
+        if (e.type === "unit") {
+          const unit = e as import("@/game/engine/types").Unit;
+          const owner = engine.getEntityOwner(unit.id);
+          if (owner && !owner.isAI && (unit.state === "attacking" || unit.state === "moving") && unit.path.length > 0) return true;
+        }
+      }
+      return false;
+    },
+  },
+  {
+    id: "combat_engage",
+    title: "Engage the Enemy!",
+    description: "Enemy units are on the map! Right-click an enemy unit to focus-fire them, or use attack-move to engage automatically. Use your hero's special abilities for a tactical edge.",
+    instruction: "Defeat at least one enemy unit.",
+    checkComplete: (engine) => {
+      // Check if any enemy unit has died
+      const enemy = engine.state.players.find(p => p.isAI || p.id === "player2");
+      if (enemy) {
+        let enemyUnitCount = 0;
+        for (const eid of enemy.entities) {
+          const e = engine.state.entities.get(eid);
+          if (e && e.type === "unit") enemyUnitCount++;
+        }
+        return enemyUnitCount < 3; // Started with 3 enemy workers
+      }
+      return false;
+    },
+  },
+  {
+    id: "hero_abilities",
+    title: "Hero Units",
+    description: "Your Hero is a powerful unique unit. Select them and check the action grid for special abilities. Heroes gain XP from combat and level up, becoming even stronger. Protect them!",
+    instruction: "Press NEXT when you're ready to graduate.",
     autoComplete: 0,
   },
   {
     id: "complete",
     title: "Tutorial Complete!",
-    description: "You now know the basics. Build your economy, train an army, and crush your enemies. Good luck, Commander!",
-    instruction: "Press FINISH to return to the main menu, or keep playing to practice.",
+    description: "You've mastered the basics: economy, building, combat, and tactics. Now go forth and conquer in Campaign or Skirmish mode! Remember: expand your base, maintain upkeep, and crush your enemies.",
+    instruction: "Press FINISH to return to menu, or keep practicing.",
     autoComplete: 0,
   },
 ];
@@ -240,6 +297,14 @@ export default function Tutorial({ onExit }: TutorialProps) {
       );
     }
 
+    // Spawn player hero
+    engine.spawnUnit(
+      "chud_pepe_lord",
+      "chuds",
+      { x: p1Pos.x + 50, y: p1Pos.y + 110 },
+      "player1"
+    );
+
     // Spawn some enemy units for combat practice
     const p2Pos = startPositions[1];
     engine.spawnBuilding("chad_main", "chads", p2Pos, "player2", true);
@@ -275,6 +340,7 @@ export default function Tutorial({ onExit }: TutorialProps) {
     const gameLoop = (timestamp: number) => {
       engine.update(timestamp);
       input.updateCamera();
+      renderer.placementPreview = input.getPlacementPreview();
       renderer.render(engine.state);
 
       const dragRect = input.getDragRect();

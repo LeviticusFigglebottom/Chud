@@ -248,6 +248,18 @@ export interface Camera {
 }
 
 // Game state
+export interface VisualEffect {
+  id: string;
+  type: 'damage_number' | 'impact' | 'slash' | 'ability_burst' | 'heal' | 'debuff_ring';
+  position: Vector2;
+  value?: number;
+  color: string;
+  duration: number;
+  elapsed: number;
+  radius?: number;
+  angle?: number;
+}
+
 export interface GameState {
   tick: number;
   time: number;
@@ -261,6 +273,7 @@ export interface GameState {
   camera: Camera;
   selectedEntities: string[];
   commands: Command[];
+  visualEffects: VisualEffect[];
   gameOver: boolean;
   winner?: string;
 }

@@ -275,7 +275,7 @@ export default function Tutorial({ onExit }: TutorialProps) {
         maxPopulation: 100,
         entities: [],
         upgrades: [],
-        isAI: false,
+        isAI: true,
         teamId: 2,
         color: "#FF4500",
         defeated: false,

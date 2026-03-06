@@ -58,8 +58,17 @@ export class CombatSystem {
       // Ranged attack - spawn projectile
       this.spawnProjectile(attacker, target);
     } else {
-      // Melee attack - instant damage
+      // Melee attack - instant damage with slash visual
       this.applyDamage(target as Unit | Building, attacker.damage);
+      // Melee slash effect toward target
+      const angle = Math.atan2(
+        target.position.y - attacker.position.y,
+        target.position.x - attacker.position.x
+      );
+      this.engine.addVisualEffect('slash', {
+        x: (attacker.position.x + target.position.x) / 2,
+        y: (attacker.position.y + target.position.y) / 2,
+      }, '#ffe080', 0.3, 18, undefined, angle);
     }
   }
 
@@ -87,6 +96,15 @@ export class CombatSystem {
   applyDamage(target: Unit | Building, rawDamage: number): void {
     const damage = Math.max(1, rawDamage - target.armor);
     target.hp -= damage;
+
+    // Damage number floating up
+    this.engine.addVisualEffect('damage_number', {
+      x: target.position.x + (Math.random() - 0.5) * 10,
+      y: target.position.y - 10,
+    }, '#ff4444', 0.8, undefined, damage);
+
+    // Impact flash on the target
+    this.engine.addVisualEffect('impact', target.position, '#ff8800', 0.25, 8);
 
     if (target.hp <= 0) {
       target.hp = 0;

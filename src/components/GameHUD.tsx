@@ -537,10 +537,18 @@ function CommandIcon({ type, size = 24 }: { type: string; size?: number }) {
     case 'attack':
       return (
         <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>
-          <line x1={s*0.15} y1={s*0.85} x2={s*0.85} y2={s*0.15} stroke="#e04040" strokeWidth="3" strokeLinecap="round" />
-          <line x1={s*0.85} y1={s*0.85} x2={s*0.15} y2={s*0.15} stroke="#c03030" strokeWidth="3" strokeLinecap="round" />
-          <polygon points={`${s*0.8},${s*0.05} ${s*0.95},${s*0.05} ${s*0.95},${s*0.2}`} fill="#e04040" />
-          <polygon points={`${s*0.05},${s*0.05} ${s*0.2},${s*0.05} ${s*0.05},${s*0.2}`} fill="#c03030" />
+          {/* Sword blade */}
+          <line x1={s*0.25} y1={s*0.75} x2={s*0.78} y2={s*0.12} stroke="#d0d0d0" strokeWidth="3" strokeLinecap="round" />
+          {/* Blade edge highlight */}
+          <line x1={s*0.28} y1={s*0.72} x2={s*0.76} y2={s*0.15} stroke="#ffffff" strokeWidth="1" strokeLinecap="round" />
+          {/* Sword tip */}
+          <polygon points={`${s*0.78},${s*0.12} ${s*0.85},${s*0.05} ${s*0.72},${s*0.18}`} fill="#e8e8e8" />
+          {/* Cross guard */}
+          <line x1={s*0.18} y1={s*0.62} x2={s*0.42} y2={s*0.72} stroke="#c4a035" strokeWidth="3" strokeLinecap="round" />
+          {/* Handle */}
+          <line x1={s*0.18} y1={s*0.82} x2={s*0.25} y2={s*0.75} stroke="#8B6914" strokeWidth="3.5" strokeLinecap="round" />
+          {/* Pommel */}
+          <circle cx={s*0.16} cy={s*0.84} r={s*0.04} fill="#c4a035" />
         </svg>
       );
     case 'patrol':

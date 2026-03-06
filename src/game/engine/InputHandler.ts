@@ -262,7 +262,8 @@ export class InputHandler {
     const entities = this.engine.getEntitiesAt(worldPos, 20);
     if (entities.length > 0) {
       const ownEntities = entities.filter(entity => localPlayer.entities.includes(entity.id));
-      const target = ownEntities.find(e => e.type === 'unit') || ownEntities[0] || entities[0];
+      if (ownEntities.length === 0) { this.notifySelectionChange(); return; }
+      const target = ownEntities.find(e => e.type === 'unit') || ownEntities[0];
 
       target.selected = true;
       if (!this.engine.state.selectedEntities.includes(target.id)) {

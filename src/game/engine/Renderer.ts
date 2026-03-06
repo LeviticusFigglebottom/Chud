@@ -1,6 +1,6 @@
 import {
   GameState, Entity, Unit, Building, Projectile,
-  Camera, Tile, Vector2, FactionId,
+  Camera, Tile, Vector2, FactionId, VisualEffect,
 } from './types';
 import { FACTION_INFO } from '../data/definitions';
 import { getUnitDefinition, getBuildingDefinition } from '../data/definitions';
@@ -112,6 +112,7 @@ export class Renderer {
 
     this.renderTerrain(state);
     this.renderEntities(state);
+    this.renderVisualEffects(state);
     this.renderBuildingPlacementPreview(state);
     this.renderSelectionBoxes(state);
     this.renderFogOfWar(state);
@@ -1517,6 +1518,149 @@ export class Renderer {
   // =====================================================
   // PROJECTILE RENDERING
   // =====================================================
+  // =====================================================
+  // VISUAL EFFECTS
+  // =====================================================
+  private renderVisualEffects(state: GameState): void {
+    const { ctx } = this;
+    for (const vfx of state.visualEffects) {
+      const t = vfx.elapsed / vfx.duration; // 0..1 progress
+      const x = vfx.position.x;
+      const y = vfx.position.y;
+
+      switch (vfx.type) {
+        case 'damage_number': {
+          const floatY = y - t * 25;
+          const alpha = 1 - t * t;
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = vfx.color;
+          ctx.font = `bold ${11 + (vfx.value && vfx.value > 30 ? 3 : 0)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+          ctx.lineWidth = 2;
+          ctx.strokeText(`-${vfx.value}`, x, floatY);
+          ctx.fillText(`-${vfx.value}`, x, floatY);
+          ctx.globalAlpha = 1;
+          break;
+        }
+        case 'impact': {
+          const r = (vfx.radius || 10) * (0.5 + t * 1.5);
+          const alpha = (1 - t) * 0.7;
+          ctx.globalAlpha = alpha;
+          // Expanding ring
+          ctx.strokeStyle = vfx.color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.stroke();
+          // Inner flash
+          if (t < 0.3) {
+            ctx.fillStyle = vfx.color;
+            ctx.globalAlpha = (1 - t / 0.3) * 0.5;
+            ctx.beginPath();
+            ctx.arc(x, y, r * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          break;
+        }
+        case 'slash': {
+          const alpha = 1 - t;
+          const angle = vfx.angle || 0;
+          const len = (vfx.radius || 18) * (0.6 + t * 0.8);
+          ctx.globalAlpha = alpha * 0.9;
+          ctx.strokeStyle = vfx.color;
+          ctx.lineWidth = 3 - t * 2;
+          ctx.lineCap = 'round';
+          // Arc slash
+          ctx.beginPath();
+          ctx.arc(x, y, len, angle - 0.8 + t * 0.3, angle + 0.8 - t * 0.3);
+          ctx.stroke();
+          // Sparks
+          if (t < 0.5) {
+            ctx.fillStyle = '#fff';
+            ctx.globalAlpha = (1 - t * 2) * 0.8;
+            for (let i = 0; i < 3; i++) {
+              const sparkAngle = angle + (i - 1) * 0.5;
+              const sparkDist = len * (0.7 + t * 1.5);
+              ctx.beginPath();
+              ctx.arc(
+                x + Math.cos(sparkAngle) * sparkDist,
+                y + Math.sin(sparkAngle) * sparkDist,
+                1.5, 0, Math.PI * 2
+              );
+              ctx.fill();
+            }
+          }
+          ctx.globalAlpha = 1;
+          ctx.lineCap = 'butt';
+          break;
+        }
+        case 'ability_burst': {
+          const r = (vfx.radius || 30) * (0.3 + t * 0.7);
+          const alpha = (1 - t) * 0.6;
+          ctx.globalAlpha = alpha;
+          // Expanding filled circle
+          const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+          grad.addColorStop(0, vfx.color);
+          grad.addColorStop(0.6, vfx.color + '80');
+          grad.addColorStop(1, 'transparent');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+          // Bright ring at edge
+          ctx.strokeStyle = vfx.color;
+          ctx.lineWidth = 2;
+          ctx.globalAlpha = alpha * 0.8;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+          break;
+        }
+        case 'heal': {
+          const floatY = y - t * 15;
+          const alpha = 1 - t;
+          ctx.globalAlpha = alpha * 0.8;
+          // Rising green cross
+          ctx.fillStyle = vfx.color;
+          const sz = 4;
+          ctx.fillRect(x - sz / 2, floatY - sz * 1.5, sz, sz * 3);
+          ctx.fillRect(x - sz * 1.5, floatY - sz / 2, sz * 3, sz);
+          // Sparkles
+          ctx.fillStyle = '#aaffaa';
+          for (let i = 0; i < 2; i++) {
+            const sa = this.animTime * 4 + i * 3;
+            ctx.beginPath();
+            ctx.arc(
+              x + Math.cos(sa) * 8,
+              floatY + Math.sin(sa) * 6,
+              1.5, 0, Math.PI * 2
+            );
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          break;
+        }
+        case 'debuff_ring': {
+          const alpha = (1 - t) * 0.5;
+          const r = (vfx.radius || 15) + Math.sin(t * 6) * 3;
+          ctx.globalAlpha = alpha;
+          ctx.strokeStyle = vfx.color;
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 3]);
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.globalAlpha = 1;
+          break;
+        }
+      }
+    }
+  }
+
   private renderProjectile(proj: Projectile): void {
     const { ctx } = this;
     const x = proj.position.x;

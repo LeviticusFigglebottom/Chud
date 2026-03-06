@@ -1,7 +1,7 @@
 import {
   GameState, GameConfig, Entity, Unit, Building, Projectile,
   Player, Command, Vector2, Tile, TerrainType, Resources,
-  FactionId, Camera, ResourceNode, TrainOrder,
+  FactionId, Camera, ResourceNode, TrainOrder, VisualEffect,
 } from './types';
 import { PathFinder } from './PathFinder';
 import { CombatSystem } from '../systems/CombatSystem';
@@ -43,6 +43,7 @@ export class GameEngine {
       camera: { x: 0, y: 0, zoom: 1, width: 0, height: 0 },
       selectedEntities: [],
       commands: [],
+      visualEffects: [],
       gameOver: false,
     };
 
@@ -289,6 +290,11 @@ export class GameEngine {
           unit.path = this.pathFinder.findPath(unit.position, dest);
         }
         break;
+      case 'ability':
+        if (cmd.abilityId) {
+          this.executeAbility(unit, cmd.abilityId, cmd.target);
+        }
+        break;
     }
   }
 
@@ -379,6 +385,8 @@ export class GameEngine {
       }
     }
 
+    this.updateVisualEffects(dt);
+    this.updateAbilityCooldowns(dt);
     this.updateUpkeep();
     this.checkVictoryConditions();
   }
@@ -486,6 +494,8 @@ export class GameEngine {
         if (target && (target.type === 'unit' || target.type === 'building')) {
           this.combatSystem.applyDamage(target as Unit | Building, proj.damage);
         }
+        // Projectile impact explosion
+        this.addVisualEffect('impact', { ...proj.position }, '#ff6644', 0.35, 14);
         toRemove.push(id);
       } else {
         proj.position.x += (dx / dist) * moveSpeed;
@@ -494,6 +504,295 @@ export class GameEngine {
     }
     for (const id of toRemove) {
       this.state.entities.delete(id);
+    }
+  }
+
+  // =====================================================
+  // ABILITY SYSTEM
+  // =====================================================
+  private executeAbility(unit: Unit, abilityId: string, target?: Vector2): void {
+    const ability = unit.abilities.find(a => a.id === abilityId);
+    if (!ability || ability.currentCooldown > 0) return;
+
+    const owner = this.getEntityOwner(unit.id);
+    if (!owner) return;
+
+    ability.currentCooldown = ability.cooldown;
+
+    const effectPos = target || unit.position;
+
+    switch (abilityId) {
+      case 'blackpill': {
+        // Single-target debuff: reduce damage by 30% for 8 seconds
+        if (target) {
+          const enemies = this.getEntitiesNear(target, 30);
+          for (const e of enemies) {
+            if (e.type !== 'unit') continue;
+            const eOwner = this.getEntityOwner(e.id);
+            if (eOwner && eOwner.teamId !== owner.teamId) {
+              const u = e as Unit;
+              const origDamage = u.damage;
+              u.damage = Math.floor(u.damage * 0.7);
+              this.addVisualEffect('debuff_ring', e.position, '#9040c0', 1.5, 20);
+              setTimeout(() => { u.damage = origDamage; }, 8000);
+              break;
+            }
+          }
+        }
+        this.addVisualEffect('ability_burst', effectPos, '#9040c0', 0.6, 25);
+        break;
+      }
+      case 'ban_hammer': {
+        // AoE damage in radius
+        const radius = 80;
+        const enemies = this.getEntitiesNear(effectPos, radius);
+        for (const e of enemies) {
+          if (e.type === 'projectile') continue;
+          const eOwner = this.getEntityOwner(e.id);
+          if (eOwner && eOwner.teamId !== owner.teamId) {
+            this.combatSystem.applyDamage(e as Unit | Building, unit.damage * 2);
+            this.addVisualEffect('impact', e.position, '#ff4400', 0.4, 12);
+          }
+        }
+        this.addVisualEffect('ability_burst', effectPos, '#ff4400', 0.8, radius);
+        break;
+      }
+      case 'feels_bad_man': {
+        // AoE debuff: reduce attack speed by 40% for 10s
+        const radius = ability.range;
+        const enemies = this.getEntitiesNear(unit.position, radius);
+        for (const e of enemies) {
+          if (e.type !== 'unit') continue;
+          const eOwner = this.getEntityOwner(e.id);
+          if (eOwner && eOwner.teamId !== owner.teamId) {
+            const u = e as Unit;
+            const origSpeed = u.attackSpeed;
+            u.attackSpeed = u.attackSpeed * 0.6;
+            this.addVisualEffect('debuff_ring', e.position, '#4488cc', 1.2, 15);
+            setTimeout(() => { u.attackSpeed = origSpeed; }, 10000);
+          }
+        }
+        this.addVisualEffect('ability_burst', unit.position, '#4488cc', 1.0, radius * 0.6);
+        break;
+      }
+      case 'rare_pepe': {
+        // Summon 3 temporary minions
+        for (let i = 0; i < 3; i++) {
+          const angle = (i / 3) * Math.PI * 2;
+          const pos = {
+            x: unit.position.x + Math.cos(angle) * 40,
+            y: unit.position.y + Math.sin(angle) * 40,
+          };
+          const minion = this.spawnUnit('chud_keyboard_warrior', unit.faction, pos, owner.id);
+          if (minion) {
+            minion.hp = minion.maxHp * 0.5;
+            setTimeout(() => this.removeEntity(minion.id), 20000);
+          }
+        }
+        this.addVisualEffect('ability_burst', unit.position, '#40c040', 0.8, 50);
+        break;
+      }
+      case 'lawsuit': {
+        // Single target heavy damage + stun (stop unit)
+        if (target) {
+          const enemies = this.getEntitiesNear(target, 30);
+          for (const e of enemies) {
+            if (e.type !== 'unit') continue;
+            const eOwner = this.getEntityOwner(e.id);
+            if (eOwner && eOwner.teamId !== owner.teamId) {
+              this.combatSystem.applyDamage(e as Unit | Building, unit.damage * 1.5);
+              const u = e as Unit;
+              u.state = 'idle';
+              u.path = [];
+              u.targetEntity = undefined;
+              this.addVisualEffect('impact', e.position, '#ffd700', 0.5, 15);
+              break;
+            }
+          }
+        }
+        this.addVisualEffect('ability_burst', effectPos, '#ffd700', 0.6, 30);
+        break;
+      }
+      case 'spin_cycle':
+      case 'mass_manipulation': {
+        // AoE damage
+        const radius = ability.range || 100;
+        const enemies = this.getEntitiesNear(effectPos, radius);
+        for (const e of enemies) {
+          if (e.type === 'projectile') continue;
+          const eOwner = this.getEntityOwner(e.id);
+          if (eOwner && eOwner.teamId !== owner.teamId) {
+            this.combatSystem.applyDamage(e as Unit | Building, unit.damage * 1.5);
+            this.addVisualEffect('impact', e.position, '#e040e0', 0.4, 12);
+          }
+        }
+        this.addVisualEffect('ability_burst', effectPos, '#e040e0', 0.8, radius * 0.5);
+        break;
+      }
+      case 'space_laser_strike': {
+        // Massive AoE
+        const radius = 120;
+        const enemies = this.getEntitiesNear(effectPos, radius);
+        for (const e of enemies) {
+          if (e.type === 'projectile') continue;
+          const eOwner = this.getEntityOwner(e.id);
+          if (eOwner && eOwner.teamId !== owner.teamId) {
+            this.combatSystem.applyDamage(e as Unit | Building, unit.damage * 3);
+            this.addVisualEffect('impact', e.position, '#c060ff', 0.5, 15);
+          }
+        }
+        this.addVisualEffect('ability_burst', effectPos, '#c060ff', 1.2, radius);
+        break;
+      }
+      case 'shield_bash':
+      case 'crusade': {
+        // AoE stun + damage
+        const radius = ability.range || 80;
+        const enemies = this.getEntitiesNear(effectPos, radius);
+        for (const e of enemies) {
+          if (e.type !== 'unit') continue;
+          const eOwner = this.getEntityOwner(e.id);
+          if (eOwner && eOwner.teamId !== owner.teamId) {
+            const u = e as Unit;
+            this.combatSystem.applyDamage(u, unit.damage);
+            u.state = 'idle';
+            u.path = [];
+            this.addVisualEffect('impact', e.position, '#c0c0e0', 0.4, 12);
+          }
+        }
+        this.addVisualEffect('ability_burst', effectPos, '#c0c0e0', 0.8, radius * 0.5);
+        break;
+      }
+      case 'e_girl_heal':
+      case 'mass_heal': {
+        // AoE heal friendlies
+        const radius = ability.range || 120;
+        const allies = this.getEntitiesNear(unit.position, radius);
+        for (const e of allies) {
+          if (e.type !== 'unit') continue;
+          const eOwner = this.getEntityOwner(e.id);
+          if (eOwner && eOwner.teamId === owner.teamId) {
+            const u = e as Unit;
+            u.hp = Math.min(u.maxHp, u.hp + unit.damage * 2);
+            this.addVisualEffect('heal', e.position, '#40e040', 0.6, 10);
+          }
+        }
+        this.addVisualEffect('ability_burst', unit.position, '#40e040', 0.8, radius * 0.4);
+        break;
+      }
+      case 'simp_surge': {
+        // AoE damage + speed boost
+        const radius = ability.range || 80;
+        const enemies = this.getEntitiesNear(effectPos, radius);
+        for (const e of enemies) {
+          if (e.type === 'projectile') continue;
+          const eOwner = this.getEntityOwner(e.id);
+          if (eOwner && eOwner.teamId !== owner.teamId) {
+            this.combatSystem.applyDamage(e as Unit | Building, unit.damage * 2);
+          }
+        }
+        // Boost own speed
+        const origSpeed = unit.speed;
+        unit.speed *= 1.5;
+        setTimeout(() => { unit.speed = origSpeed; }, 8000);
+        this.addVisualEffect('ability_burst', effectPos, '#ff60b0', 0.8, radius * 0.5);
+        break;
+      }
+      case 'protein_shake': {
+        // Heal + damage boost to self/nearby allies
+        const radius = 80;
+        const allies = this.getEntitiesNear(unit.position, radius);
+        for (const e of allies) {
+          if (e.type !== 'unit') continue;
+          const eOwner = this.getEntityOwner(e.id);
+          if (eOwner && eOwner.teamId === owner.teamId) {
+            const u = e as Unit;
+            u.hp = Math.min(u.maxHp, u.hp + 50);
+            const origDmg = u.damage;
+            u.damage = Math.floor(u.damage * 1.3);
+            this.addVisualEffect('heal', e.position, '#60ee60', 0.5, 10);
+            setTimeout(() => { u.damage = origDmg; }, 10000);
+          }
+        }
+        this.addVisualEffect('ability_burst', unit.position, '#60ee60', 0.8, 40);
+        break;
+      }
+      case 'sigma_grindset':
+      case 'grindset_aura': {
+        // Big self-buff
+        const origDmg = unit.damage;
+        const origSpd = unit.speed;
+        unit.damage = Math.floor(unit.damage * 1.5);
+        unit.speed *= 1.3;
+        this.addVisualEffect('ability_burst', unit.position, '#8040c0', 1.0, 30);
+        setTimeout(() => { unit.damage = origDmg; unit.speed = origSpd; }, 15000);
+        break;
+      }
+      default: {
+        // Generic: AoE damage to enemies in range
+        const radius = ability.range || 80;
+        const enemies = this.getEntitiesNear(effectPos, radius);
+        for (const e of enemies) {
+          if (e.type === 'projectile') continue;
+          const eOwner = this.getEntityOwner(e.id);
+          if (eOwner && eOwner.teamId !== owner.teamId) {
+            this.combatSystem.applyDamage(e as Unit | Building, unit.damage);
+            this.addVisualEffect('impact', e.position, ability.icon === '⛔' ? '#ff4400' : '#ffcc00', 0.4, 12);
+          }
+        }
+        this.addVisualEffect('ability_burst', effectPos, '#ffcc00', 0.8, 40);
+        break;
+      }
+    }
+  }
+
+  private getEntitiesNear(pos: Vector2, radius: number): Entity[] {
+    const result: Entity[] = [];
+    for (const [, entity] of this.state.entities) {
+      if (entity.type === 'projectile') continue;
+      if (entity.hp <= 0) continue;
+      const dx = entity.position.x - pos.x;
+      const dy = entity.position.y - pos.y;
+      if (dx * dx + dy * dy <= radius * radius) {
+        result.push(entity);
+      }
+    }
+    return result;
+  }
+
+  addVisualEffect(type: VisualEffect['type'], position: Vector2, color: string, duration: number, radius?: number, value?: number, angle?: number): void {
+    this.state.visualEffects.push({
+      id: `vfx_${++entityIdCounter}`,
+      type,
+      position: { ...position },
+      color,
+      duration,
+      elapsed: 0,
+      radius,
+      value,
+      angle,
+    });
+  }
+
+  private updateVisualEffects(dt: number): void {
+    for (let i = this.state.visualEffects.length - 1; i >= 0; i--) {
+      this.state.visualEffects[i].elapsed += dt;
+      if (this.state.visualEffects[i].elapsed >= this.state.visualEffects[i].duration) {
+        this.state.visualEffects.splice(i, 1);
+      }
+    }
+  }
+
+  // Update ability cooldowns
+  private updateAbilityCooldowns(dt: number): void {
+    for (const [, entity] of this.state.entities) {
+      if (entity.type !== 'unit') continue;
+      const unit = entity as Unit;
+      for (const ability of unit.abilities) {
+        if (ability.currentCooldown > 0) {
+          ability.currentCooldown = Math.max(0, ability.currentCooldown - dt);
+        }
+      }
     }
   }
 
